@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mlcanvas": {
+      "command": "node",
+      "args": ["/Users/titor/maliang/mcp/server.mjs"]
+    }
+  }
+}

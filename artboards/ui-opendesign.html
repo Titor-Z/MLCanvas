@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="artboard" content="1280x800">
+  <title>方案B · OpenDesign 风格</title>
+  <style>
+    :root {
+      --bar: #26262b;
+      --panel: #2b2b31;
+      --canvas: #333338;
+      --line: rgba(255, 255, 255, 0.09);
+      --text: #ececf1;
+      --text-2: #a3a3ae;
+      --text-3: #71717c;
+      --accent: #8b5cf6;
+      --accent-soft: rgba(139, 92, 246, 0.18);
+      --board-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+      --radius: 6px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1280px; height: 800px;
+      display: grid;
+      grid-template-rows: 48px 1fr;
+      grid-template-columns: 232px 1fr 272px;
+      grid-template-areas:
+        "top top top"
+        "files canvas inspector";
+      background: var(--canvas);
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      font-size: 12px;
+      color: var(--text);
+      user-select: none;
+      overflow: hidden;
+    }
+
+    /* ── 顶栏：工具条风格 ─────────────────── */
+    .topbar {
+      grid-area: top;
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 14px;
+      background: var(--bar);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar__logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 700;
+    }
+    .topbar__logo i {
+      width: 20px; height: 20px; border-radius: 6px;
+      background: linear-gradient(135deg, #8b5cf6, #d946ef);
+    }
+    .topbar__divider { width: 1px; height: 20px; background: var(--line); margin: 0 6px; }
+    .tools { display: flex; gap: 4px; }
+    .tools__btn {
+      width: 30px; height: 30px;
+      display: grid; place-items: center;
+      border-radius: var(--radius);
+      color: var(--text-2);
+    }
+    .tools__btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .tools__btn--active { background: var(--accent-soft); color: #b79bff; }
+    .topbar__spacer { flex: 1; }
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .actions__btn {
+      height: 26px; padding: 0 12px;
+      display: flex; align-items: center; gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--text-2); font-size: 11px;
+    }
+    .actions__btn--primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+
+    /* ── 左侧画板列表 ─────────────────────── */
+    .files {
+      grid-area: files;
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .files__head {
+      padding: 12px 14px 8px;
+      font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-3);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .files__add { color: var(--text-2); font-size: 14px; line-height: 1; }
+    .file {
+      padding: 9px 14px;
+      display: flex; align-items: center; gap: 10px;
+      border-left: 2px solid transparent;
+    }
+    .file__thumb {
+      width: 30px; height: 38px; flex-shrink: 0;
+      background: #fff; border-radius: 3px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      position: relative; overflow: hidden;
+    }
+    .file__thumb::after { content: ""; position: absolute; inset: 22% 20% auto; height: 4px; border-radius: 2px; background: #d8dee6; }
+    .file__thumb::before { content: ""; position: absolute; inset: 0 0 55%; background: linear-gradient(135deg, #8b5cf688, #d946ef66); }
+    .file__meta { min-width: 0; }
+    .file__name { font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file__dims { font-size: 10px; color: var(--text-3); font-family: "SF Mono", Menlo, monospace; margin-top: 2px; }
+    .file--active { background: var(--accent-soft); border-left-color: var(--accent); }
+    .file--active .file__name { color: #c4b0ff; }
+
+    .files__section {
+      margin-top: 4px; padding: 10px 14px 8px;
+      font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-3);
+      border-top: 1px solid var(--line);
+    }
+    .comp { padding: 6px 14px; font-size: 12px; color: var(--text-2); display: flex; gap: 8px; align-items: center; }
+    .comp i { width: 10px; height: 10px; border: 1.5px solid var(--text-3); border-radius: 2px; flex-shrink: 0; }
+    .files__spacer { flex: 1; }
+    .files__foot {
+      margin: 10px; padding: 10px;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      font-size: 11px; color: var(--text-3); line-height: 1.6;
+      text-align: center;
+    }
+    .files__foot b { color: var(--text-2); font-weight: 500; }
+
+    /* ── 画布 ─────────────────────────────── */
+    .canvas { grid-area: canvas; position: relative; overflow: hidden; background: var(--canvas); }
+    .board { position: absolute; background: #fff; box-shadow: var(--board-shadow); border-radius: 2px; }
+    .board__label {
+      position: absolute; top: -20px; left: 0;
+      font-size: 11px; color: var(--text-2);
+    }
+    .board__label b { color: var(--text); font-weight: 600; }
+    .board--selected { outline: 2px solid var(--accent); }
+
+    /* 选中框四角手柄 */
+    .handle { position: absolute; width: 8px; height: 8px; background: #fff; border: 1.5px solid var(--accent); border-radius: 1px; }
+    .handle--nw { top: -5px; left: -5px; }
+    .handle--ne { top: -5px; right: -5px; }
+    .handle--sw { bottom: -5px; left: -5px; }
+    .handle--se { bottom: -5px; right: -5px; }
+    .board__dims {
+      position: absolute; top: -20px; right: 0;
+      font-size: 10px; color: var(--text-3); font-family: "SF Mono", Menlo, monospace;
+    }
+
+    .demo-settings { width: 360px; height: 430px; left: 72px; top: 96px; }
+    .ds__head { display: flex; align-items: center; gap: 12px; padding: 20px 22px 14px; }
+    .ds__avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6, #d946ef); }
+    .ds__name { font-size: 15px; font-weight: 700; color: #1c1c22; }
+    .ds__mail { font-size: 11px; color: #9aa; margin-top: 3px; }
+    .ds__group { padding: 6px 22px 14px; }
+    .ds__label { font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; color: #a8aeb8; margin: 12px 0 6px; }
+    .ds__field { height: 34px; border: 1px solid #e4e7ec; border-radius: 7px; display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: #454a52; }
+    .ds__btnrow { display: flex; gap: 10px; margin-top: 18px; }
+    .ds__btn { flex: 1; height: 34px; border-radius: 7px; background: #f1f2f5; }
+    .ds__btn--primary { background: #8b5cf6; }
+
+    .demo-list { width: 260px; height: 470px; left: 490px; top: 96px; }
+    .dl__head { padding: 18px 20px 10px; font-size: 14px; font-weight: 700; color: #1c1c22; }
+    .dl__tabs { display: flex; gap: 16px; padding: 0 20px 10px; border-bottom: 1px solid #eef0f3; }
+    .dl__tab { font-size: 11px; color: #9aa3ad; padding-bottom: 8px; }
+    .dl__tab--active { color: #8b5cf6; box-shadow: inset 0 -2px 0 #8b5cf6; font-weight: 600; }
+    .dl__item { display: flex; gap: 12px; padding: 12px 20px; align-items: center; border-bottom: 1px solid #f4f5f8; }
+    .dl__dot { width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; }
+    .dl__lines { flex: 1; display: grid; gap: 6px; }
+    .dl__line { height: 9px; border-radius: 4px; background: #e9ecf1; }
+    .dl__line--w60 { width: 60%; }
+
+    .demo-chart { width: 300px; height: 140px; left: 60px; top: 584px; padding: 14px 16px; }
+    .dc__title { font-size: 12px; font-weight: 700; color: #1c1c22; margin-bottom: 10px; }
+    .dc__bars { display: flex; gap: 10px; align-items: flex-end; height: 62px; }
+    .dc__bar { flex: 1; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, #8b5cf6, #c4b5fd); opacity: 0.85; }
+    .dc__bar--h1 { height: 45%; } .dc__bar--h2 { height: 70%; } .dc__bar--h3 { height: 55%; }
+    .dc__bar--h4 { height: 92%; } .dc__bar--h5 { height: 64%; } .dc__bar--h6 { height: 80%; }
+
+    /* ── 右侧检查器 ───────────────────────── */
+    .inspector {
+      grid-area: inspector;
+      background: var(--panel);
+      border-left: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .inspector__tabs { display: flex; border-bottom: 1px solid var(--line); }
+    .inspector__tab { flex: 1; height: 36px; display: grid; place-items: center; font-size: 11px; color: var(--text-3); }
+    .inspector__tab--active { color: #c4b0ff; box-shadow: inset 0 -2px 0 var(--accent); }
+    .inspector__section { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    .inspector__title { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; }
+    .row { display: flex; align-items: center; justify-content: space-between; height: 25px; }
+    .row__label { color: var(--text-2); }
+    .row__value { color: var(--text); font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .field { height: 28px; border: 1px solid var(--line); border-radius: var(--radius); display: flex; align-items: center; padding: 0 10px; font-size: 11px; color: var(--text); font-family: "SF Mono", Menlo, monospace; }
+
+    .activity { display: grid; gap: 10px; }
+    .act { display: flex; gap: 10px; }
+    .act__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 4px; flex-shrink: 0; }
+    .act__dot--dim { background: var(--text-3); }
+    .act__text { font-size: 11px; color: var(--text-2); line-height: 1.45; }
+    .act__text b { color: var(--text); font-weight: 600; }
+    .act__time { font-size: 10px; color: var(--text-3); margin-top: 1px; font-family: "SF Mono", Menlo, monospace; }
+
+    .inspector__spacer { flex: 1; }
+    .inspector__footer { padding: 10px 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+    .btn { height: 32px; display: grid; place-items: center; border-radius: var(--radius); font-size: 12px; font-weight: 500; }
+    .btn--ghost { border: 1px solid var(--line); color: var(--text-2); }
+    .btn--primary { background: var(--accent); color: #fff; }
+
+  </style>
+</head>
+<body>
+  <!-- 顶栏 -->
+  <header class="topbar">
+    <div class="topbar__logo" data-id="logo"><i></i>MLCanvas</div>
+    <div class="topbar__divider"></div>
+    <nav class="tools">
+      <div class="tools__btn tools__btn--active" data-id="tool-select"><svg viewBox="0 0 16 16"><path d="M3 1.5 L12.5 8 L8 9 L6 13.5 Z"/></svg></div>
+      <div class="tools__btn"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1"/><path d="M8 5.5v5M5.5 8h5"/></svg></div>
+      <div class="tools__btn"><svg viewBox="0 0 16 16"><path d="M2 8h12M8 2v12"/></svg></div>
+      <div class="tools__btn"><svg viewBox="0 0 16 16"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v2.7h-2.7"/></svg></div>
+    </nav>
+    <div class="topbar__spacer"></div>
+    <div class="actions">
+      <div class="actions__btn">刷新全部</div>
+      <div class="actions__btn actions__btn--primary" data-id="btn-ai">⌘ 让 Agent 改</div>
+    </div>
+  </header>
+
+  <!-- 左侧：画板文件列表 -->
+  <aside class="files">
+    <div class="files__head"><span>画板 · 5</span><span class="files__add">＋</span></div>
+    <div class="file file--active" data-id="file-active">
+      <div class="file__thumb"></div>
+      <div class="file__meta"><div class="file__name">设置</div></div>
+    </div>
+    <div class="file">
+      <div class="file__thumb"></div>
+      <div class="file__meta"><div class="file__name">消息</div></div>
+    </div>
+    <div class="file">
+      <div class="file__thumb"></div>
+      <div class="file__meta"><div class="file__name">统计</div></div>
+    </div>
+    <div class="file">
+      <div class="file__thumb"></div>
+      <div class="file__meta"><div class="file__name">首页</div></div>
+    </div>
+    <div class="file">
+      <div class="file__thumb"></div>
+      <div class="file__meta"><div class="file__name">登录</div></div>
+    </div>
+    <div class="files__section">组件库</div>
+    <div class="comp"><i></i>按钮 / 主要</div>
+    <div class="comp"><i></i>卡片 / 个人资料</div>
+    <div class="files__spacer"></div>
+    <div class="files__foot">Agent 新建的画板会自动出现在这里</div>
+  </aside>
+
+  <!-- 画布 -->
+  <main class="canvas">
+    <div class="board demo-settings board--selected" data-id="board-selected">
+      <div class="board__label"><b>设置</b></div>
+      <div class="handle handle--nw"></div><div class="handle handle--ne"></div>
+      <div class="handle handle--sw"></div><div class="handle handle--se"></div>
+      <div class="ds__head">
+        <div class="ds__avatar"></div>
+        <div><div class="ds__name">Maliang</div><div class="ds__mail">dev@mlcanvas.app</div></div>
+      </div>
+      <div class="ds__group">
+        <div class="ds__label">账户</div>
+        <div class="ds__field">maliang</div>
+        <div class="ds__label">通知</div>
+        <div class="ds__field">开启</div>
+        <div class="ds__btnrow"><div class="ds__btn"></div><div class="ds__btn ds__btn--primary"></div></div>
+      </div>
+    </div>
+
+    <div class="board demo-list">
+      <div class="board__label"><b>消息</b></div>
+      <div class="dl__head">消息</div>
+      <div class="dl__tabs"><div class="dl__tab dl__tab--active">全部</div><div class="dl__tab">未读</div><div class="dl__tab">已归档</div></div>
+      <div class="dl__item"><div class="dl__dot" style="background:linear-gradient(135deg,#8b5cf6,#d946ef)"></div><div class="dl__lines"><div class="dl__line"></div><div class="dl__line dl__line--w60"></div></div></div>
+      <div class="dl__item"><div class="dl__dot" style="background:#e3e7ee"></div><div class="dl__lines"><div class="dl__line"></div><div class="dl__line dl__line--w60"></div></div></div>
+      <div class="dl__item"><div class="dl__dot" style="background:#e3e7ee"></div><div class="dl__lines"><div class="dl__line"></div><div class="dl__line dl__line--w60"></div></div></div>
+    </div>
+
+    <div class="board demo-chart">
+      <div class="board__label"><b>统计</b></div>
+      <div class="dc__title">近 7 天 Agent 调用</div>
+      <div class="dc__bars">
+        <div class="dc__bar dc__bar--h1"></div><div class="dc__bar dc__bar--h2"></div>
+        <div class="dc__bar dc__bar--h3"></div><div class="dc__bar dc__bar--h4"></div>
+        <div class="dc__bar dc__bar--h5"></div><div class="dc__bar dc__bar--h6"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 右侧检查器 -->
+  <aside class="inspector">
+    <div class="inspector__tabs">
+      <div class="inspector__tab inspector__tab--active">属性</div>
+      <div class="inspector__tab">Agent</div>
+      <div class="inspector__tab">设置</div>
+    </div>
+
+    <div class="inspector__section">
+      <div class="inspector__title">来源</div>
+      <div class="row"><span class="row__label">名称</span><span class="row__value">设置</span></div>
+      <div class="row"><span class="row__label">尺寸</span><span class="row__value">360 × 430</span></div>
+      <div class="row"><span class="row__label">更新于</span><span class="row__value">14:32</span></div>
+      <div class="row"><span class="row__label">刷新方式</span><span class="row__value">自动</span></div>
+    </div>
+
+    <div class="inspector__section">
+      <div class="inspector__title">Agent 活动</div>
+      <div class="activity">
+        <div class="act"><div class="act__dot"></div><div><div class="act__text">更新了「设置」· 调整表单间距</div><div class="act__time">14:32:07</div></div></div>
+        <div class="act"><div class="act__dot"></div><div><div class="act__text">回读了「设置」· 确认效果</div><div class="act__time">14:32:11</div></div></div>
+        <div class="act"><div class="act__dot act__dot--dim"></div><div><div class="act__text">参考了组件「按钮 / 主要」</div><div class="act__time">14:31:56</div></div></div>
+      </div>
+    </div>
+
+    <div class="inspector__spacer"></div>
+    <div class="inspector__footer">
+      <div class="btn btn--ghost">框选发送给 Agent</div>
+      <div class="btn btn--primary" data-id="btn-primary">Agent 已连接</div>
+    </div>
+  </aside>
+
+</body>
+</html>

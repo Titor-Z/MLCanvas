@@ -1,0 +1,25 @@
+[package]
+name = "mlcanvas"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+notify = "8"
+base64 = "0.22"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6"
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSGeometry", "NSString", "NSData", "NSDictionary", "NSError"] }
+objc2-app-kit = { version = "0.3", features = ["NSApplication", "NSBitmapImageRep", "NSColor", "NSEvent", "NSGraphics", "NSGraphicsContext", "NSImage", "NSImageRep", "NSResponder"] }
+objc2-web-kit = { version = "0.3", features = ["WKSnapshotConfiguration", "WKWebView", "block2"] }
+
+[profile.dev]
+# 8GB 内存 + 有限磁盘：关掉 debug 信息，显著缩小 target 目录
+debug = 0

@@ -1,0 +1,25 @@
+# CHANGELOG
+
+## 0.1.0 — 2026-09-29
+
+V1 最小链路 + MCP 接入（首个可用版本）。
+
+- Tauri 2 壳 + Svelte 5 + TypeScript 壳 UI，画板网格响应式（1/2/3/4 列，与 why.md 窗口规范一致）
+- 画板 = artboards/ 下的纯 HTML 文件，iframe 经 asset 协议渲染
+- FSEvents 文件监听（notify，200ms 防抖），按画板精确刷新 iframe
+- MCP：mcp/server.mjs（stdio, MCP SDK）↔ 应用内 TCP 桥（127.0.0.1:9915, NDJSON）
+- 7 个 MCP 工具：list/read/write/register_artboard、notify_ready、screenshot_artboard、query_element
+- 截图器：隐藏窗口加载画板 + WKWebView takeSnapshot（objc2 绑定），返回 PNG；query_element 用 elementFromPoint 经事件回传
+
+## 0.2.0 — 2026-09-30
+
+0.2.0 壳 UI：项目体系 + 主页小窗 + 设计主窗（按最终版本形态设计）。
+
+- 项目体系：~/MLCanvas/<项目名>/artboards/，首次启动建「示例项目」并迁移旧 artboards/
+- 主页窗口（960×640）：问候语、最近项目（方块/列表视图切换，本地记忆）、新建项目轻量模态（只需名称）
+- 设计窗口（1280×800，open_project 动态创建）：自绘标题栏（六菜单+居中文档名+缩放控件+窗口三键）
+- 左侧：44px 工具栏（选择/抓手/标注 + 设计/组件/规范面板切换，再点关闭）；设计面板=画板列表搜索；组件/规范=诚实空态
+- 画布：固定尺寸画板 iframe，外槽缩放（40–200%，步进 10），空态引导「在 Agent 里描述第一个界面」
+- 检查器：画板节（名称/尺寸 W×H）、Agent 协作节（状态点+活动流）、底部便签输入（占位，V2 启用）
+- watcher 事件载荷升级为 {project, file}，前端按活动项目过滤；MCP 工具全部走活动项目
+- 已知限制：单活动项目（一次一个设计窗口）

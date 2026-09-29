@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="artboard" content="1280x800">
+  <title>方案A · Adobe XD 风格</title>
+  <style>
+    :root {
+      --bar: #1e1e1e;          /* 顶栏/侧栏 */
+      --panel: #242424;        /* 右侧面板 */
+      --canvas: #383838;       /* 中央画布 */
+      --line: rgba(255, 255, 255, 0.07);
+      --text: #e8e8e8;
+      --text-2: #9d9d9d;
+      --text-3: #6a6a6a;
+      --accent: #4b9eff;
+      --accent-soft: rgba(75, 158, 255, 0.16);
+      --board-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+      --radius: 4px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1280px; height: 800px;
+      display: grid;
+      grid-template-rows: 40px 1fr;
+      grid-template-columns: 44px 1fr 264px;
+      grid-template-areas:
+        "top top top"
+        "rail canvas inspector";
+      background: var(--canvas);
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      font-size: 12px;
+      color: var(--text);
+      user-select: none;
+      overflow: hidden;
+    }
+
+    /* ── 顶栏 ─────────────────────────────── */
+    .topbar {
+      grid-area: top;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 12px;
+      background: var(--bar);
+      border-bottom: 1px solid var(--line);
+    }
+    .traffic { display: flex; gap: 8px; margin-right: 4px; }
+    .traffic i {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #3d3d3d;
+    }
+    .traffic i:nth-child(1) { background: #ff5f57; }
+    .traffic i:nth-child(2) { background: #febc2e; }
+    .traffic i:nth-child(3) { background: #28c840; }
+    .topbar__logo {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.4px;
+      color: var(--text);
+    }
+    .topbar__logo span { color: var(--accent); }
+    .topbar__doc {
+      font-size: 12px; color: var(--text-2);
+      padding: 2px 14px;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+    }
+    .topbar__spacer { flex: 1; }
+    .pill {
+      display: flex; align-items: center; gap: 6px;
+      height: 22px; padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      font-size: 11px; color: var(--text-2);
+    }
+    .pill__dot { width: 6px; height: 6px; border-radius: 50%; background: #28c840; }
+
+    /* ── 左侧工具栏 ───────────────────────── */
+    .rail {
+      grid-area: rail;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 6px;
+      padding-top: 10px;
+      background: var(--bar);
+      border-right: 1px solid var(--line);
+    }
+    .rail__btn {
+      width: 30px; height: 30px;
+      display: grid; place-items: center;
+      border-radius: var(--radius);
+      color: var(--text-2);
+    }
+    .rail__btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+    .rail__btn--active { background: var(--accent); color: #fff; }
+    .rail__gap { height: 10px; }
+
+    /* ── 画布 ─────────────────────────────── */
+    .canvas {
+      grid-area: canvas;
+      position: relative;
+      overflow: hidden;
+      background: var(--canvas);
+    }
+    /* 画板：直接浮在画布上，无卡片外壳 */
+    .board { position: absolute; background: #fff; box-shadow: var(--board-shadow); border-radius: 2px; }
+    .board__label {
+      position: absolute; top: -18px; left: 0;
+      font-size: 11px; color: var(--text-2); white-space: nowrap;
+    }
+    .board__label b { color: var(--text); font-weight: 600; }
+    .board--selected { outline: 1.5px solid var(--accent); outline-offset: 0; }
+    .board--selected .board__label b { color: var(--accent); }
+    .board__dims {
+      position: absolute; left: 50%; bottom: -24px; transform: translateX(-50%);
+      padding: 2px 8px;
+      background: var(--accent); color: #fff;
+      border-radius: 3px;
+      font-size: 10px; font-family: "SF Mono", Menlo, monospace;
+      white-space: nowrap;
+    }
+
+    /* 画布里的示例画板内容（模拟用户项目） */
+    .demo-phone { width: 280px; height: 560px; left: 56px; top: 88px; }
+    .demo-phone__head { height: 44px; display: flex; align-items: center; padding: 0 16px; background: #fff; border-bottom: 1px solid #eee; }
+    .demo-phone__title { font-size: 14px; font-weight: 600; color: #222; }
+    .demo-phone__hero { height: 160px; background: linear-gradient(135deg, #4b9eff, #7a5cff); }
+    .demo-phone__body { padding: 14px 16px; display: grid; gap: 10px; }
+    .sk { border-radius: 6px; background: #eef1f5; }
+    .sk--line { height: 12px; }
+    .sk--line.w60 { width: 60%; }
+    .demo-card { display: flex; gap: 10px; align-items: center; }
+    .demo-card__avatar { width: 36px; height: 36px; border-radius: 50%; background: #dfe5ec; flex-shrink: 0; }
+    .demo-card__lines { flex: 1; display: grid; gap: 6px; }
+
+    .demo-login { width: 220px; height: 460px; left: 400px; top: 138px; display: flex; flex-direction: column; align-items: center; padding: 36px 24px; }
+    .demo-login__logo { width: 48px; height: 48px; border-radius: 12px; background: #4b9eff; opacity: 0.9; }
+    .demo-login__title { margin-top: 16px; font-size: 15px; font-weight: 700; color: #1a1a1a; }
+    .demo-login__sub { margin-top: 6px; font-size: 10px; color: #9aa3ad; }
+    .demo-login__field { width: 100%; height: 32px; margin-top: 24px; border: 1px solid #e2e6ea; border-radius: 6px; }
+    .demo-login__btn { width: 100%; height: 34px; margin-top: 12px; border-radius: 6px; background: #4b9eff; opacity: 0.92; }
+
+    .demo-dash { width: 300px; height: 300px; left: 656px; top: 88px; padding: 18px; }
+    .demo-dash__row { display: flex; gap: 12px; }
+    .demo-dash__stat { flex: 1; padding: 12px; border: 1px solid #edf0f3; border-radius: 8px; }
+    .demo-dash__bar { height: 90px; margin-top: 14px; border-radius: 8px; background: linear-gradient(180deg, #4b9eff33, #4b9eff08); border: 1px solid #e8eef7; }
+
+    /* ── 右侧面板 ─────────────────────────── */
+    .inspector {
+      grid-area: inspector;
+      background: var(--panel);
+      border-left: 1px solid var(--line);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .inspector__section { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    .inspector__title {
+      font-size: 10px; letter-spacing: 1px;
+      color: var(--text-3); text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .row { display: flex; align-items: center; justify-content: space-between; height: 24px; }
+    .row__label { color: var(--text-2); }
+    .row__value { color: var(--text); font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
+    .row__value--file { color: var(--accent); font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
+
+    .switchrow { display: flex; align-items: center; justify-content: space-between; height: 28px; }
+    .switch { width: 30px; height: 16px; border-radius: 8px; background: var(--accent); position: relative; }
+    .switch i { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+    .switch--off { background: #464646; }
+    .switch--off i { right: auto; left: 2px; }
+
+    .log { display: grid; gap: 7px; margin-top: 2px; }
+    .log__item { display: flex; gap: 8px; align-items: baseline; font-family: "SF Mono", Menlo, monospace; font-size: 10px; }
+    .log__time { color: var(--text-3); flex-shrink: 0; }
+    .log__text { color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .log__text b { color: var(--text); font-weight: 600; }
+
+    .inspector__spacer { flex: 1; }
+    .inspector__footer { padding: 10px 14px; border-top: 1px solid var(--line); }
+    .btn {
+      width: 100%; height: 30px;
+      display: grid; place-items: center;
+      background: var(--accent); color: #fff;
+      border-radius: var(--radius);
+      font-size: 12px; font-weight: 500;
+    }
+
+
+    /* 右下角缩放控件（XD 风格浮块） */
+    .zoom {
+      position: absolute; right: 16px; bottom: 16px;
+      display: flex; align-items: center; gap: 2px;
+      height: 28px; padding: 0 4px;
+      background: var(--bar);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--board-shadow);
+      font-size: 11px; color: var(--text-2);
+    }
+    .zoom__btn { width: 24px; height: 24px; display: grid; place-items: center; color: var(--text-2); }
+    .zoom__value { padding: 0 6px; color: var(--text); }
+  </style>
+</head>
+<body>
+  <!-- 顶栏 -->
+  <header class="topbar">
+    <div class="traffic"><i></i><i></i><i></i></div>
+    <div class="topbar__logo" data-id="logo">ML<span>Canvas</span></div>
+    <div class="topbar__spacer"></div>
+    <div class="topbar__doc" data-id="doc-title">示例项目</div>
+    <div class="topbar__spacer"></div>
+    <div class="pill" data-id="mcp-status"><i class="pill__dot"></i>Agent 已连接</div>
+  </header>
+
+  <!-- 左侧工具栏 -->
+  <nav class="rail">
+    <div class="rail__btn rail__btn--active" data-id="tool-select" title="选择">
+      <svg viewBox="0 0 16 16"><path d="M3 1.5 L12.5 8 L8 9 L6 13.5 Z"/></svg>
+    </div>
+    <div class="rail__btn" title="画板">
+      <svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1"/><path d="M8 5.5v5M5.5 8h5"/></svg>
+    </div>
+    <div class="rail__gap"></div>
+    <div class="rail__btn" title="抓手">
+      <svg viewBox="0 0 16 16"><path d="M5 7V3.8a1 1 0 0 1 2 0V7m0-2.5a1 1 0 0 1 2 0V7m0-1.5a1 1 0 0 1 2 0V8m0-.5a1 1 0 0 1 2 0v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8a1 1 0 0 1 1-1z"/></svg>
+    </div>
+    <div class="rail__btn" title="全部刷新">
+      <svg viewBox="0 0 16 16"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v2.7h-2.7"/></svg>
+    </div>
+  </nav>
+
+  <!-- 画布：画板浮在画布上 -->
+  <main class="canvas">
+    <!-- 选中态画板 -->
+    <div class="board demo-phone board--selected" data-id="board-selected">
+      <div class="board__label"><b>首页</b></div>
+      <div class="demo-phone__head"><span class="demo-phone__title">首页</span></div>
+      <div class="demo-phone__hero"></div>
+      <div class="demo-phone__body">
+        <div class="sk sk--line w60"></div>
+        <div class="demo-card">
+          <div class="demo-card__avatar"></div>
+          <div class="demo-card__lines"><div class="sk sk--line"></div><div class="sk sk--line w60"></div></div>
+        </div>
+        <div class="demo-card">
+          <div class="demo-card__avatar"></div>
+          <div class="demo-card__lines"><div class="sk sk--line"></div><div class="sk sk--line w60"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="board demo-login">
+      <div class="board__label"><b>登录</b></div>
+      <div class="demo-login__logo"></div>
+      <div class="demo-login__title">登录 MLCanvas</div>
+      <div class="demo-login__sub">Agent 优先的设计观察窗</div>
+      <div class="demo-login__field"></div>
+      <div class="demo-login__field"></div>
+      <div class="demo-login__btn"></div>
+    </div>
+
+    <div class="board demo-dash">
+      <div class="board__label"><b>仪表盘</b></div>
+      <div class="demo-dash__row">
+        <div class="demo-dash__stat"><div class="sk sk--line w60"></div></div>
+        <div class="demo-dash__stat"><div class="sk sk--line w60"></div></div>
+        <div class="demo-dash__stat"><div class="sk sk--line w60"></div></div>
+      </div>
+      <div class="demo-dash__bar"></div>
+    </div>
+
+    <!-- 右下角缩放控件 -->
+    <div class="zoom" data-id="zoom">
+      <div class="zoom__btn">−</div>
+      <div class="zoom__value">100%</div>
+      <div class="zoom__btn">＋</div>
+    </div>
+  </main>
+
+  <!-- 右侧属性面板 -->
+  <aside class="inspector">
+    <div class="inspector__section" data-id="panel-board">
+      <div class="inspector__title">画板</div>
+      <div class="row"><span class="row__label">名称</span><span class="row__value--file">首页</span></div>
+      <div class="row"><span class="row__label">尺寸</span><span class="row__value">320 × 640</span></div>
+      <div class="row"><span class="row__label">更新于</span><span class="row__value">14:32</span></div>
+    </div>
+
+    <div class="inspector__section" data-id="panel-display">
+      <div class="inspector__title">显示</div>
+      <div class="switchrow"><span class="row__label">文件变化自动刷新</span><div class="switch"><i></i></div></div>
+      <div class="switchrow"><span class="row__label">显示画板标签</span><div class="switch"><i></i></div></div>
+      <div class="switchrow"><span class="row__label">深色画布</span><div class="switch switch--off"><i></i></div></div>
+    </div>
+
+    <div class="inspector__section" data-id="panel-mcp">
+      <div class="inspector__title">Agent 活动</div>
+      <div class="log">
+        <div class="log__item"><span class="log__time">14:32:07</span><span class="log__text">更新了「首页」</span></div>
+        <div class="log__item"><span class="log__time">14:31:58</span><span class="log__text">回读了「首页」</span></div>
+        <div class="log__item"><span class="log__time">14:31:40</span><span class="log__text">查询了「首页」的元素</span></div>
+        <div class="log__item"><span class="log__time">14:30:12</span><span class="log__text">新建了「登录」</span></div>
+        <div class="log__item"><span class="log__time">14:29:47</span><span class="log__text">更新了「仪表盘」</span></div>
+      </div>
+    </div>
+
+    <div class="inspector__spacer"></div>
+    <div class="inspector__footer">
+      <div class="btn" data-id="btn-notify-agent">把标注发给 Agent</div>
+    </div>
+  </aside>
+
+</body>
+</html>

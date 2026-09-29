@@ -1,0 +1,15 @@
+# node
+node_modules/
+dist/
+
+# rust / tauri
+app/src-tauri/target/
+
+# icon 源图（由 scripts/gen-icon.mjs 生成）
+app/app-icon.png
+
+# macOS
+.DS_Store
+
+# mcp server 依赖
+mcp/node_modules/

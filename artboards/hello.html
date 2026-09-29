@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="artboard" content="320x640">
+  <title>Hello Artboard</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      background: linear-gradient(135deg, #6c6cf5, #9333ea);
+      color: #fff;
+    }
+    .hello { text-align: center; }
+    .hello__title { font-size: 32px; margin: 0 0 8px; }
+    .hello__desc { opacity: 0.85; margin: 0 0 20px; }
+    .hello__btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 15px;
+      cursor: pointer;
+      background: #fff;
+      color: #6c6cf5;
+    }
+    .hello__count { display: block; margin-top: 12px; font-size: 13px; opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="hello">
+    <h1 class="hello__title">MLCanvas 观察窗已就绪</h1>
+    <p class="hello__desc">这是 artboards/hello.html，改动它并保存，窗口会自动刷新。</p>
+    <button class="hello__btn" onclick="helloClick()">点我一下</button>
+    <span class="hello__count" id="count">点击了 0 次</span>
+  </div>
+  <script>
+    let n = 0;
+    function helloClick() {
+      n += 1;
+      document.getElementById("count").textContent = "点击了 " + n + " 次";
+    }
+  </script>
+</body>
+</html>

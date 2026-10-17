@@ -1,14 +1,18 @@
-/* ── MLCanvas 设计 token：与 artboards/ui-*.html 设计稿一致 ── */
+/* ── 聿Canvas 设计 token：与 artboards/ui-*.html 设计稿一致 ── */
 :root {
-  --chrome: #1e1e1e;
+  --chrome: #202024;
+  --panel: #242429;
   --bg: #232323;
   --canvas: #383838;
   --card: #2a2a2a;
-  --field: #2e2e2e;
-  --line: rgba(255, 255, 255, 0.08);
-  --text: #e8e8e8;
-  --text-2: #9d9d9d;
-  --text-3: #86868b;
+  --field: #2a2a31;
+  --raise: #2c2c33;
+  --raise-2: #34343c;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-2: rgba(255, 255, 255, 0.14);
+  --text: #ececf0;
+  --text-2: #a8a8b2;
+  --text-3: #7c7c88;
   --accent: #4b9eff;
   --accent-soft: rgba(75, 158, 255, 0.14);
   --ok: #28c840;
@@ -76,3 +80,20 @@ svg { fill: none; }
 @media (prefers-contrast: more) {
   :root { --text-2: #c4c4c8; --text-3: #a5a5aa; --line: rgba(255, 255, 255, 0.18); }
 }
+
+/* ── 全局滚动条：自绘 overlay 拇指（scrollFade action 生成）──
+   原生条定制后会占 8px 布局宽（左右边距不一致的根源），故彻底隐藏原生条；
+   拇指绝对定位悬浮、不占布局宽，滚动中浮现（.sb-active）、静止 800ms 淡出。
+   亮面容器加 .sb-light。 */
+.sb-fade { position: relative; scrollbar-width: none; }
+.sb-fade::-webkit-scrollbar { display: none; }
+.sb-thumb {
+  position: absolute; right: 3px; top: 0;
+  width: 8px; border-radius: 4px;
+  background: rgba(255, 255, 255, 0.22);
+  opacity: 0; pointer-events: none;
+  transition: opacity 200ms ease;
+  z-index: 5; display: none;
+}
+.sb-fade.sb-active .sb-thumb { opacity: 1; }
+.sb-fade.sb-light .sb-thumb { background: rgba(0, 0, 0, 0.2); }

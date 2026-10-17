@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="artboard" content="760x760">
+<title>阴影预览 · 三方案</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 760px; height: 760px;
+    background: #1a1a1c;
+    font-family: -apple-system, 'PingFang SC', sans-serif;
+    color: #e8e8e8;
+    position: relative;
+    overflow: hidden;
+  }
+  .slice {
+    width: 299px;
+    background: #232326;
+    padding: 12px 0 16px;
+    position: absolute;
+    left: 16px;
+  }
+  #a { top: 16px; }
+  #b { top: 288px; }
+  #c { top: 524px; }
+  .sec {
+    display: flex; align-items: center; gap: 5px;
+    padding: 10px 14px 8px;
+    font-size: 10px; letter-spacing: 1px;
+    color: #86868b;
+  }
+  .sec .chev { color: #a0a0a0; font-size: 8px; }
+  .sec .count { margin-left: auto; font-family: 'SF Mono', Menlo, monospace; font-size: 9px; }
+
+  /* ── 方案 A：实物展台 ── */
+  .a-stage {
+    margin: 2px 14px 10px;
+    background: #f4f4f1;
+    border-radius: 8px;
+    height: 64px;
+    display: grid; place-items: center;
+  }
+  .a-card {
+    width: 176px; height: 40px;
+    background: #ffffff;
+    border-radius: 8px;
+  }
+  .a-card.pop { width: 120px; height: 36px; border-radius: 8px; }
+  .a-label {
+    padding: 0 14px 12px;
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .a-label .cn { font-size: 11px; color: #d0d0d0; }
+  .a-label .en { font-size: 9px; color: #8a8a8a; font-family: 'SF Mono', Menlo, monospace; }
+
+  /* ── 方案 B：有无对照 ── */
+  .b-row { padding: 0 14px 12px; }
+  .b-pair { display: flex; gap: 12px; align-items: center; }
+  .b-card { width: 108px; height: 44px; background: #ffffff; border-radius: 8px; }
+  .b-tag { font-size: 9px; color: #8a8a8a; text-align: center; margin-top: 5px; }
+  .b-tag.on { color: #d0d0d0; }
+
+  /* ── 方案 C：叠边出血 ── */
+  .c-stage {
+    margin: 2px 14px 10px;
+    background: #f4f4f1;
+    border-radius: 8px;
+    height: 44px;
+    width: 160px;
+    display: flex; align-items: center;
+  }
+  .c-card {
+    width: 128px; height: 36px;
+    background: #ffffff;
+    border-radius: 8px;
+    margin-left: 32px;   /* 故意压出井的右边界 */
+  }
+
+  .shadow-card { box-shadow: 0 1px 2px rgba(17,17,17,.06), 0 4px 12px rgba(17,17,17,.08); }
+  .shadow-pop  { box-shadow: 0 4px 10px rgba(17,17,17,.10), 0 12px 32px rgba(17,17,17,.14); }
+
+  .notes { position: absolute; left: 340px; top: 16px; width: 400px; }
+  .note { margin-bottom: 22px; }
+  .note h3 { font-size: 13px; color: #ffffff; margin-bottom: 4px; }
+  .note h3 span { color: #4b9eff; }
+  .note p { font-size: 11px; line-height: 1.7; color: #a0a0a0; }
+  .note p b { color: #e8e8e8; font-weight: 600; }
+  .verdict { margin-top: 6px; padding-top: 6px; border-top: 1px solid #333; font-size: 10px; color: #6e6e73; }
+</style>
+</head>
+<body>
+
+  <!-- 方案 A -->
+  <div class="slice" id="a">
+    <div class="sec"><span class="chev">▾</span><span>阴影</span><span class="count">2</span></div>
+    <div class="a-stage"><div class="a-card shadow-card"></div></div>
+    <div class="a-label"><span class="cn">卡片阴影</span><span class="en">card</span></div>
+    <div class="a-stage"><div class="a-card pop shadow-pop"></div></div>
+    <div class="a-label"><span class="cn">浮层阴影</span><span class="en">pop</span></div>
+  </div>
+
+  <!-- 方案 B -->
+  <div class="slice" id="b">
+    <div class="sec"><span class="chev">▾</span><span>阴影</span><span class="count">2</span></div>
+    <div class="b-row">
+      <div class="b-pair">
+        <div><div class="b-card"></div><div class="b-tag">无</div></div>
+        <div><div class="b-card shadow-card"></div><div class="b-tag on">卡片阴影</div></div>
+      </div>
+    </div>
+    <div class="b-row">
+      <div class="b-pair">
+        <div><div class="b-card"></div><div class="b-tag">无</div></div>
+        <div><div class="b-card shadow-pop"></div><div class="b-tag on">浮层阴影</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案 C -->
+  <div class="slice" id="c">
+    <div class="sec"><span class="chev">▾</span><span>阴影</span><span class="count">2</span></div>
+    <div style="padding: 0 14px 10px;">
+      <div class="c-stage"><div class="c-card shadow-card"></div></div>
+      <div class="a-label"><span class="cn">卡片阴影</span><span class="en">card</span></div>
+      <div class="c-stage"><div class="c-card shadow-pop"></div></div>
+      <div class="a-label" style="padding-bottom:0"><span class="cn">浮层阴影</span><span class="en">pop</span></div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <h3><span>方案 A</span> · 实物展台</h3>
+      <p>浅色井放大到整行，里面放<b>真实比例的白卡</b>（不是碎纸片）——阴影有大面可落，大小面级的差异一眼可辨。遵守「大表面读作更厚」：卡的尺寸贴近它的真实用途。</p>
+      <p class="verdict">行高最高（每阴影 ~110px），但信息最完整、最接近组件真实语境</p>
+    </div>
+    <div class="note">
+      <h3><span>方案 B</span> · 有无对照</h3>
+      <p>每行左右两张同尺寸卡：<b>左平右影</b>。人对「差」的感知远强于对「绝对值」的感知——对比让 0.06 的微阴影变得可读，同时完全诚实（两边都是真实渲染）。</p>
+      <p class="verdict">行高适中（~80px），感知效率最高，且天然回答「这个阴影值多少」</p>
+    </div>
+    <div class="note">
+      <h3><span>方案 C</span> · 叠边出血</h3>
+      <p>小井 + 卡片压出边界，影子落在浅色井上、卡边受深色衬托。最省纵向空间，但<b>构图有表演性</b>，两区视觉重量不均，深浅交界的噪声大。</p>
+      <p class="verdict">最紧凑（~64px），但花哨、不像数据行</p>
+    </div>
+  </div>
+
+</body>
+</html>

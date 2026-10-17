@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="artboard" content="360x640">
+  <title>滚动条 · 全局规格</title>
+  <style>
+    :root {
+      --chrome: #1e1e1e;
+      --line: rgba(255, 255, 255, 0.07);
+      --text: #e8e8e8;
+      --text-2: #9d9d9d;
+      --text-3: #6a6a6a;
+      --field: #2e2e2e;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 360px; height: 640px;
+      background: var(--chrome);
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      font-size: 12px;
+      color: var(--text);
+      user-select: none;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      padding: 18px;
+      gap: 14px;
+    }
+    h1 { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; }
+    .sub { font-size: 10.5px; color: var(--text-3); line-height: 1.5; margin-top: 4px; }
+
+    .spec { display: grid; gap: 7px; }
+    .spec__row { display: flex; gap: 8px; font-size: 11px; color: var(--text-2); line-height: 1.5; }
+    .spec__row b { color: var(--text); font-weight: 600; flex-shrink: 0; }
+
+    .demo {
+      border-radius: 8px; overflow: hidden;
+      border: 1px solid var(--line);
+      position: relative;
+    }
+    .demo__head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 10px;
+      font-size: 10px; letter-spacing: 0.5px;
+    }
+    .demo__body { padding: 10px 10px 14px; display: grid; gap: 7px; position: relative; }
+    .ln { height: 7px; border-radius: 4px; }
+    .sb { position: absolute; right: 3px; width: 8px; border-radius: 4px; }
+    .sb--dark { background: rgba(255,255,255,.22); }
+    .sb--dark-hi { background: rgba(255,255,255,.34); }
+    .sb--light { background: rgba(0,0,0,.2); }
+    .sb--light-hi { background: rgba(0,0,0,.34); }
+    .note { font-size: 9.5px; color: var(--text-3); margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>滚动条 · 全局规格</h1>
+    <div class="sub">一套自绘 overlay 规则，全部滚动容器统一生效（市场 / 详情 / 资源 / 画板列表 / 大窗 / 主页）。</div>
+  </div>
+
+  <div class="spec">
+    <div class="spec__row"><b>形态</b>拇指宽 8px · 圆角 4 · 最短 32px（可抓握）· 无箭头按钮</div>
+    <div class="spec__row"><b>轨道</b>透明、不占布局宽（overlay 悬浮，内容右缘自带留白）</div>
+    <div class="spec__row"><b>颜色</b>随表面明度反转：暗面白 20% · 亮面黑 20% · 悬停加深至 34%</div>
+    <div class="spec__row"><b>显隐</b>滚动中浮现，静止约 800ms 后淡出——隐身但不隐瞒可滚</div>
+  </div>
+
+  <!-- 暗面：滚动中 -->
+  <div class="demo" style="background:#26262a">
+    <div class="demo__head" style="color:var(--text-3)"><span>暗面 · 滚动中</span><span>rgba(255,255,255,.22)</span></div>
+    <div class="demo__body">
+      <div class="ln" style="background:var(--field); width:88%"></div>
+      <div class="ln" style="background:var(--field); width:72%"></div>
+      <div class="ln" style="background:var(--field); width:80%"></div>
+      <div class="sb sb--dark" style="top: 10px; height: 64px;"></div>
+    </div>
+  </div>
+
+  <!-- 暗面：拇指悬停 -->
+  <div class="demo" style="background:#26262a">
+    <div class="demo__head" style="color:var(--text-3)"><span>暗面 · 拇指悬停</span><span>rgba(255,255,255,.34)</span></div>
+    <div class="demo__body">
+      <div class="ln" style="background:var(--field); width:84%"></div>
+      <div class="ln" style="background:var(--field); width:66%"></div>
+      <div class="sb sb--dark-hi" style="top: 10px; height: 44px;"></div>
+    </div>
+  </div>
+
+  <!-- 亮面（如组件大窗白页） -->
+  <div class="demo" style="background:#ffffff">
+    <div class="demo__head" style="color:#9b9a97"><span>亮面 · 滚动中</span><span>rgba(0,0,0,.2)</span></div>
+    <div class="demo__body">
+      <div class="ln" style="background:#ececec; width:90%"></div>
+      <div class="ln" style="background:#ececec; width:70%"></div>
+      <div class="ln" style="background:#ececec; width:78%"></div>
+      <div class="sb sb--light" style="top: 10px; height: 56px;"></div>
+    </div>
+  </div>
+
+  <!-- 静止：淡出 -->
+  <div class="demo" style="background:#26262a">
+    <div class="demo__head" style="color:var(--text-3)"><span>静止 800ms 后</span><span>拇指淡出</span></div>
+    <div class="demo__body">
+      <div class="ln" style="background:var(--field); width:86%"></div>
+      <div class="ln" style="background:var(--field); width:74%"></div>
+      <div class="ln" style="background:var(--field); width:60%"></div>
+      <div class="note">无残留轨道与拇指，内容右缘留白 11px 防贴边</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="artboard" content="520x760, x=12540, y=0">
+  <title>对话页 · 模型切换</title>
+  <style>
+    :root {
+      --chrome: #1e1e1e;
+      --canvas: #383838;
+      --line: rgba(255, 255, 255, 0.07);
+      --text: #e8e8e8;
+      --text-2: #9d9d9d;
+      --text-3: #6a6a6a;
+      --field: #2e2e2e;
+      --lift: #2a2a2e;
+      --accent: #4b9eff;
+      --accent-soft: rgba(75, 158, 255, 0.16);
+      --ok: #34c759;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 520px; height: 760px;
+      background: var(--canvas);
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      font-size: 12px;
+      color: var(--text);
+      user-select: none;
+      overflow: hidden;
+      position: relative;
+    }
+    .panel {
+      position: absolute; right: 28px; top: 30px;
+      width: 264px; height: 700px;
+      background: var(--chrome);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .tabs { display: flex; gap: 2px; margin: 10px 10px 0; padding: 2px; background: var(--field); border-radius: 7px; flex-shrink: 0; }
+    .tabs__item { flex: 1; height: 24px; display: grid; place-items: center; border-radius: 5px; font-size: 11px; color: var(--text-2); }
+    .tabs__item--active { background: #3c3c40; color: var(--text); font-weight: 600; }
+
+    .chat__head { display: flex; align-items: center; gap: 6px; padding: 12px 14px 10px; flex-shrink: 0; }
+    .chat__head b { font-size: 12px; font-weight: 600; }
+    .chat__model {
+      display: flex; align-items: center; gap: 5px;
+      margin-left: auto;
+      height: 20px; padding: 0 8px;
+      background: var(--accent-soft);
+      border-radius: 10px;
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 10px; color: var(--accent); font-weight: 600;
+    }
+    .chat__model-caret { width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; border-top: 4px solid var(--accent); }
+    .chat__state { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-2); flex-shrink: 0; }
+    .chat__state i { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+
+    .msg--user { align-self: flex-end; max-width: 88%; padding: 7px 11px; background: var(--accent-soft); border-radius: 11px 11px 3px 11px; font-size: 11.5px; line-height: 1.5; }
+    .msg--ai { font-size: 11.5px; line-height: 1.6; }
+    .chat__scroll { flex: 1; min-height: 0; overflow: hidden; padding: 2px 14px 10px; display: flex; flex-direction: column; gap: 12px; }
+
+    .chat__activity { flex-shrink: 0; border-top: 1px solid var(--line); padding: 9px 14px; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-2); }
+    .chat__activity em { margin-left: auto; font-style: normal; font-size: 10px; color: var(--text-3); }
+    .chat__footer { flex-shrink: 0; padding: 10px 10px 12px; border-top: 1px solid var(--line); display: flex; gap: 7px; }
+    .chat__input { flex: 1; height: 30px; padding: 0 10px; background: var(--field); border-radius: 7px; font-size: 11px; color: var(--text-3); display: flex; align-items: center; }
+    .chat__send { width: 30px; height: 30px; flex-shrink: 0; display: grid; place-items: center; background: var(--field); border-radius: 7px; }
+    .chat__send svg { width: 12px; height: 12px; fill: none; stroke: var(--text-3); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ── 模型切换下拉（锚定 chip，右对齐展开） ── */
+    .picker {
+      position: absolute;
+      right: 44px; top: 106px;
+      width: 250px;
+      background: var(--lift);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 9px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+      z-index: 5;
+    }
+    .picker__search { margin: 9px; height: 26px; background: var(--field); border-radius: 6px; display: flex; align-items: center; gap: 7px; padding: 0 9px; font-size: 11px; color: var(--text-3); }
+    .picker__search svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+    .picker__list { padding: 0 5px 5px; }
+    .pick { display: flex; align-items: baseline; gap: 7px; padding: 6px 8px; border-radius: 6px; }
+    .pick:hover { background: rgba(255, 255, 255, 0.06); }
+    .pick__id { font-family: "SF Mono", Menlo, monospace; font-size: 10.5px; }
+    .pick__vendor { font-size: 9.5px; color: var(--text-3); }
+    .pick__ctx { margin-left: auto; flex-shrink: 0; font-family: "SF Mono", Menlo, monospace; font-size: 9.5px; color: var(--text-3); }
+    .pick--active .pick__id { color: var(--accent); font-weight: 600; }
+    .pick--active .pick__check { margin-left: auto; width: 11px; height: 11px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .pick--active .pick__ctx { margin-left: 6px; }
+    .pick__sep { margin: 4px 8px; border-top: 1px solid var(--line); }
+    .picker__src { padding: 0 13px 9px; font-size: 9.5px; color: var(--text-3); display: flex; align-items: center; gap: 5px; }
+    .picker__src i { width: 5px; height: 5px; border-radius: 50%; background: var(--ok); }
+    .dim { opacity: 0.45; }
+  </style>
+</head>
+<body>
+  <div class="panel dim">
+    <div class="tabs">
+      <div class="tabs__item">画板</div>
+      <div class="tabs__item tabs__item--active">Agent</div>
+    </div>
+    <div class="chat__head">
+      <b>设计助手</b>
+      <span class="chat__model">deepseek-v4-flash<span class="chat__model-caret"></span></span>
+      <span class="chat__state"><i></i>可用</span>
+    </div>
+    <div class="chat__scroll">
+      <div class="msg msg--user">帮我画一个音乐 App 的登录页</div>
+      <div class="msg msg--ai">好的，先看一下项目里已有哪些画板…</div>
+    </div>
+    <div class="chat__activity">活动记录 <em>6</em></div>
+    <div class="chat__footer">
+      <div class="chat__input">描述你想要的界面…</div>
+      <div class="chat__send"><svg viewBox="0 0 13 13"><path d="M1.5 6.5 L11.5 1.5 L8 11.5 L5.5 7z"/></svg></div>
+    </div>
+  </div>
+
+  <!-- 模型切换下拉：跨配置切换，当前项打勾 -->
+  <div class="picker">
+    <div class="picker__search">
+      <svg viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.4"/><path d="M7.6 7.6 10.4 10.4"/></svg>
+      搜索模型…
+    </div>
+    <div class="picker__list">
+      <div class="pick pick--active">
+        <span class="pick__id">deepseek-v4-flash</span>
+        <svg class="pick__check" viewBox="0 0 12 12"><path d="M2 6.5 4.8 9.2 10 3.4"/></svg>
+        <span class="pick__ctx">1M</span>
+      </div>
+      <div class="pick">
+        <span class="pick__id">deepseek-chat</span>
+        <span class="pick__ctx">1M</span>
+      </div>
+      <div class="pick">
+        <span class="pick__vendor">智谱 GLM ·</span>
+        <span class="pick__id">glm-4.6</span>
+        <span class="pick__ctx">200K</span>
+      </div>
+      <div class="pick">
+        <span class="pick__vendor">Kimi ·</span>
+        <span class="pick__id">kimi-k2.6</span>
+        <span class="pick__ctx">256K</span>
+      </div>
+      <div class="pick__sep"></div>
+    </div>
+    <div class="picker__src"><i></i>切换立即生效 · 在设置里可管理全部配置</div>
+  </div>
+</body>
+</html>

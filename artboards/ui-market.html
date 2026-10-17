@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="artboard" content="1280x800">
+  <title>设计窗口 · 风格市场</title>
+  <style>
+    :root {
+      --chrome: #1e1e1e;
+      --canvas: #383838;
+      --line: rgba(255, 255, 255, 0.07);
+      --text: #e8e8e8;
+      --text-2: #9d9d9d;
+      --text-3: #6a6a6a;
+      --field: #2e2e2e;
+      --accent: #4b9eff;
+      --accent-soft: rgba(75, 158, 255, 0.16);
+      --board-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+      --radius: 4px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1280px; height: 800px;
+      display: grid;
+      grid-template-rows: 44px 1fr;
+      grid-template-columns: 44px 256px 1fr 264px;
+      grid-template-areas:
+        "titlebar titlebar titlebar titlebar"
+        "tools market canvas inspector";
+      background: var(--canvas);
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      font-size: 12px;
+      color: var(--text);
+      user-select: none;
+      overflow: hidden;
+    }
+
+    /* ── 标题栏 ── */
+    .titlebar {
+      grid-area: titlebar;
+      display: flex; align-items: center;
+      background: var(--chrome);
+      border-bottom: 1px solid var(--line);
+      padding: 0 12px 0 10px;
+    }
+    .titlebar__logo { display: flex; align-items: center; margin: 0 12px 0 2px; }
+    .titlebar__logo i { width: 18px; height: 18px; border-radius: 5px; background: linear-gradient(135deg, #4b9eff, #7a5cff); }
+    .menus { display: flex; }
+    .menus__item { padding: 4px 9px; border-radius: var(--radius); font-size: 12px; color: var(--text-2); }
+    .titlebar__spacer { flex: 1; }
+    .titlebar__doc { font-size: 12px; font-weight: 600; }
+    .zoom { display: flex; align-items: center; gap: 2px; height: 26px; padding: 0 2px; margin-right: 8px; border-radius: var(--radius); color: var(--text-2); }
+    .zoom__btn { width: 22px; height: 24px; display: grid; place-items: center; border-radius: 4px; font-size: 13px; }
+    .zoom__value { width: 30px; height: 24px; display: flex; align-items: center; justify-content: flex-end; padding: 0 2px; border: 1px solid var(--line); border-radius: 4px; }
+    .winctl { display: flex; align-items: center; gap: 2px; margin-left: 10px; }
+    .winctl__btn { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius); color: var(--text-2); }
+    .winctl__btn svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.2; stroke-linecap: round; }
+    .winctl__btn--close:hover { background: #e81123; color: #fff; }
+
+    /* ── 工具栏 ── */
+    .tools {
+      grid-area: tools;
+      background: var(--chrome); border-right: 1px solid var(--line);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 6px 0; gap: 2px;
+    }
+    .tools__btn { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: var(--text-2); }
+    .tools__btn--active { background: var(--accent-soft); color: var(--accent); }
+    .tools__btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+    .tools__spacer { flex: 1; }
+    .tools__panels { display: flex; flex-direction: column; gap: 2px; }
+    .tools__panel { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: var(--text-3); }
+    .tools__panel--active { background: var(--accent-soft); color: var(--accent); }
+    .tools__panel svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ── 市场面板 ── */
+    .market {
+      grid-area: market;
+      background: var(--chrome); border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .market__head { padding: 13px 14px 0; }
+    .market__title { font-size: 13px; font-weight: 600; }
+    .market__sub { margin-top: 3px; font-size: 11px; color: var(--text-3); line-height: 1.5; }
+    .market__search {
+      margin: 10px 14px 0;
+      height: 26px; padding: 0 9px;
+      background: var(--field); border-radius: 5px;
+      font-size: 11px; color: var(--text-3);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .market__search svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+    .chips { display: flex; gap: 5px; padding: 10px 14px 2px; overflow: hidden; }
+    .chip {
+      flex-shrink: 0; padding: 3px 8px; border-radius: 20px;
+      font-size: 11px; color: var(--text-2);
+      background: var(--field);
+    }
+    .chip--active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .market__scroll { flex: 1; overflow-y: auto; padding: 10px 14px 14px; display: grid; gap: 12px; align-content: start; }
+
+    .pack { border-radius: 8px; cursor: pointer; }
+    .pack:active { transform: scale(0.98); }
+    .pack--active { outline: 1px solid var(--accent); background: var(--field); padding: 5px; margin: -5px; }
+
+    /* 封面：包令牌现场渲染的迷你首屏 */
+    .cover {
+      height: 96px;
+      border-radius: 7px;
+      background: var(--c-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 11px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .pack--active .cover { border-color: transparent; }
+    .cover__nav { display: flex; align-items: center; gap: 4px; }
+    .cover__dot { width: 8px; height: 8px; border-radius: 2.5px; background: var(--c-ac); flex-shrink: 0; }
+    .cover__ln { width: 20px; height: 4px; border-radius: 2px; background: var(--c-bd); }
+    .cover__cta { margin-left: auto; width: 24px; height: 10px; border-radius: var(--c-r); background: var(--c-btn); }
+    .cover__hl { margin-top: 12px; width: 64%; height: 8px; border-radius: 3px; background: var(--c-fg); opacity: 0.92; }
+    .cover__sub { margin-top: 6px; width: 46%; height: 5px; border-radius: 2.5px; background: var(--c-mut); opacity: 0.75; }
+    .cover__actions { display: flex; gap: 5px; margin-top: 12px; }
+    .cover__btn { width: 44px; height: 17px; border-radius: var(--c-r); background: var(--c-btn); }
+    .cover__ghost { width: 34px; height: 17px; border-radius: var(--c-r); border: 1px solid var(--c-bd); }
+
+    .pack__row { display: flex; align-items: center; gap: 5px; padding: 0 2px; }
+    .pack__name { font-size: 12px; font-weight: 600; }
+    .pack__cat { margin-left: auto; font-size: 10px; color: var(--text-3); }
+    .pack__desc {
+      padding: 2px 2px 0;
+      font-size: 10.5px; color: var(--text-2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .pack__badge {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 4px;
+      height: 17px; padding: 0 7px;
+      background: var(--accent-soft); border-radius: 9px;
+      font-size: 10px; font-weight: 600; color: var(--accent);
+    }
+    .pack__badge i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+    /* ── 画布 / 检查器 ── */
+    .canvasarea { grid-area: canvas; position: relative; overflow: hidden; }
+    .board { position: absolute; background: #fff; box-shadow: var(--board-shadow); border-radius: 2px; }
+    .board__label { position: absolute; top: -19px; left: 0; font-size: 11px; color: var(--text-2); }
+    .board__label b { color: var(--text); font-weight: 600; }
+    .board--selected { outline: 1.5px solid var(--accent); }
+    .board--selected .board__label b { color: var(--accent); }
+    .demo-home { width: 320px; height: 640px; left: 28px; top: 90px; }
+    .demo-login { width: 320px; height: 480px; left: 372px; top: 90px; background: #fbfbfa; }
+    .sk { height: 7px; border-radius: 4px; background: #ececec; }
+    .sk--w60 { width: 60%; }
+    .inspector { grid-area: inspector; background: var(--chrome); border-left: 1px solid var(--line); padding: 14px; }
+    .inspector__title { font-size: 11px; color: var(--text-3); letter-spacing: 0.5px; margin-bottom: 10px; }
+    .fieldrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .fieldrow__label { width: 32px; font-size: 11px; color: var(--text-3); flex-shrink: 0; }
+    .fieldrow__input {
+      flex: 1; height: 26px; padding: 0 8px;
+      background: var(--field); border-radius: 4px;
+      font-size: 11.5px; display: flex; align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <header class="titlebar">
+    <div class="titlebar__logo"><i></i></div>
+    <div class="menus">
+      <div class="menus__item">文件</div><div class="menus__item">编辑</div><div class="menus__item">视图</div>
+      <div class="menus__item">画板</div><div class="menus__item">Agent</div><div class="menus__item">帮助</div>
+    </div>
+    <div class="titlebar__spacer"></div>
+    <div class="titlebar__doc">示例项目</div>
+    <div class="titlebar__spacer"></div>
+    <div class="zoom">
+      <div class="zoom__btn">−</div><div class="zoom__value">100</div><div class="zoom__btn">＋</div>
+    </div>
+    <div class="winctl">
+      <div class="winctl__btn"><svg viewBox="0 0 12 12"><path d="M1 4.5h10M1 7.5h10"/></svg></div>
+      <div class="winctl__btn"><svg viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5"/></svg></div>
+      <div class="winctl__btn winctl__btn--close"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8"/></svg></div>
+    </div>
+  </header>
+
+  <nav class="tools">
+    <div class="tools__btn tools__btn--active" title="选择"><svg viewBox="0 0 16 16"><path d="M4 2 L13 8.5 L8.8 9.4 L6.5 13.5 Z"/></svg></div>
+    <div class="tools__btn" title="抓手"><svg viewBox="0 0 16 16"><path d="M5 7V3.8a1 1 0 0 1 2 0V7m0-2.5a1 1 0 0 1 2 0V7m0-1.5a1 1 0 0 1 2 0V8m0-.5a1 1 0 0 1 2 0v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8a1 1 0 0 1 1-1z"/></svg></div>
+    <div class="tools__btn" title="标注"><svg viewBox="0 0 16 16"><path d="M11.1 2.3a1.9 1.9 0 0 1 2.6 2.6L5 13.6 2 14l.4-3z"/></svg></div>
+    <div class="tools__spacer"></div>
+    <div class="tools__panels">
+      <div class="tools__panel" title="设计面板"><svg viewBox="0 0 16 16"><path d="M2 5V3.5A1.5 1.5 0 0 1 3.5 2H5M11 2h1.5A1.5 1.5 0 0 1 14 3.5V5M14 11v1.5a1.5 1.5 0 0 1-1.5 1.5H11M5 14H3.5A1.5 1.5 0 0 1 2 12.5V11"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/></svg></div>
+      <div class="tools__panel" title="资源面板"><svg viewBox="0 0 16 16"><path d="M8 1.8 L10.5 5 L8 8.2 L5.5 5 Z M4.5 7 L7 10.2 L4.5 13.4 L2 10.2 Z M11.5 7 L14 10.2 L11.5 13.4 L9 10.2 Z"/></svg></div>
+      <div class="tools__panel tools__panel--active" title="市场面板"><svg viewBox="0 0 16 16"><path d="M2.5 6 4 2.5h8L13.5 6z"/><path d="M2.5 6h11"/><path d="M3.5 6v7.5h9V6"/><path d="M6.5 13.5v-3.6h3v3.6"/></svg></div>
+    </div>
+  </nav>
+
+  <aside class="market">
+    <div class="market__head">
+      <div class="market__title">市场</div>
+      <div class="market__sub">风格参考库 · 应用由 Agent 翻译为项目规范</div>
+    </div>
+    <div class="market__search">
+      <svg viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.4"/><path d="M7.6 7.6 10.4 10.4"/></svg>
+      搜索风格包
+    </div>
+    <div class="chips">
+      <div class="chip chip--active">全部</div>
+      <div class="chip">极简</div>
+      <div class="chip">暗色</div>
+      <div class="chip">企业</div>
+      <div class="chip">明快</div>
+    </div>
+    <div class="market__scroll">
+      <!-- 每张封面用该包的真实令牌渲染：迷你首屏 = 导航 + 标题 + 主按钮 -->
+      <div class="pack pack--active">
+        <div class="cover" style="--c-bg:#0f1011; --c-fg:#f7f8f8; --c-mut:#8a8f98; --c-bd:rgba(255,255,255,.16); --c-btn:#5e6ad2; --c-ac:#7170ff; --c-r:6px">
+          <div class="cover__nav"><i class="cover__dot"></i><i class="cover__ln"></i><i class="cover__ln"></i><i class="cover__cta"></i></div>
+          <div class="cover__hl"></div><div class="cover__sub"></div>
+          <div class="cover__actions"><i class="cover__btn"></i><i class="cover__ghost"></i></div>
+        </div>
+        <div class="pack__row"><span class="pack__name">Linear</span><span class="pack__badge"><i></i>使用中</span></div>
+        <div class="pack__desc">效率 & SaaS · 精密克制的深色产品风</div>
+      </div>
+
+      <div class="pack">
+        <div class="cover" style="--c-bg:#ffffff; --c-fg:#191918; --c-mut:#9b9a97; --c-bd:#d3d1cb; --c-btn:#191918; --c-ac:#2383e2; --c-r:4px">
+          <div class="cover__nav"><i class="cover__dot"></i><i class="cover__ln"></i><i class="cover__ln"></i><i class="cover__cta"></i></div>
+          <div class="cover__hl"></div><div class="cover__sub"></div>
+          <div class="cover__actions"><i class="cover__btn"></i><i class="cover__ghost"></i></div>
+        </div>
+        <div class="pack__row"><span class="pack__name">Notion</span><span class="pack__cat">笔记 & 文档</span></div>
+        <div class="pack__desc">纸面质感的黑白灰，留白与层级说话</div>
+      </div>
+
+      <div class="pack">
+        <div class="cover" style="--c-bg:#09090b; --c-fg:#fafafa; --c-mut:#a1a1aa; --c-bd:#27272a; --c-btn:#fafafa; --c-ac:#fafafa; --c-r:5px">
+          <div class="cover__nav"><i class="cover__dot"></i><i class="cover__ln"></i><i class="cover__ln"></i><i class="cover__cta"></i></div>
+          <div class="cover__hl"></div><div class="cover__sub"></div>
+          <div class="cover__actions"><i class="cover__btn"></i><i class="cover__ghost"></i></div>
+        </div>
+        <div class="pack__row"><span class="pack__name">shadcn</span><span class="pack__cat">组件范式</span></div>
+        <div class="pack__desc">中性色基座，语义令牌的最小集</div>
+      </div>
+
+      <div class="pack">
+        <div class="cover" style="--c-bg:#121212; --c-fg:#ffffff; --c-mut:#a7a7a7; --c-bd:#2e2e2e; --c-btn:#1ed760; --c-ac:#1ed760; --c-r:999px">
+          <div class="cover__nav"><i class="cover__dot"></i><i class="cover__ln"></i><i class="cover__ln"></i><i class="cover__cta"></i></div>
+          <div class="cover__hl"></div><div class="cover__sub"></div>
+          <div class="cover__actions"><i class="cover__btn"></i><i class="cover__ghost"></i></div>
+        </div>
+        <div class="pack__row"><span class="pack__name">Spotify</span><span class="pack__cat">媒体 & 娱乐</span></div>
+        <div class="pack__desc">高饱和品牌绿 + 深底，胶囊按钮</div>
+      </div>
+
+      <div class="pack">
+        <div class="cover" style="--c-bg:#ffffff; --c-fg:#4b4b4b; --c-mut:#afafaf; --c-bd:#e5e5e5; --c-btn:#58cc02; --c-ac:#1cb0f6; --c-r:12px">
+          <div class="cover__nav"><i class="cover__dot"></i><i class="cover__ln"></i><i class="cover__ln"></i><i class="cover__cta"></i></div>
+          <div class="cover__hl"></div><div class="cover__sub"></div>
+          <div class="cover__actions"><i class="cover__btn"></i><i class="cover__ghost"></i></div>
+        </div>
+        <div class="pack__row"><span class="pack__name">Duolingo</span><span class="pack__cat">教育 & 趣味</span></div>
+        <div class="pack__desc">高饱和多色、大圆角与游戏化反馈</div>
+      </div>
+
+      <div class="pack">
+        <div class="cover" style="--c-bg:#000000; --c-fg:#ededed; --c-mut:#888888; --c-bd:#333333; --c-btn:#ffffff; --c-ac:#0070f3; --c-r:6px">
+          <div class="cover__nav"><i class="cover__dot"></i><i class="cover__ln"></i><i class="cover__ln"></i><i class="cover__cta"></i></div>
+          <div class="cover__hl"></div><div class="cover__sub"></div>
+          <div class="cover__actions"><i class="cover__btn"></i><i class="cover__ghost"></i></div>
+        </div>
+        <div class="pack__row"><span class="pack__name">Vercel</span><span class="pack__cat">开发 & 工具</span></div>
+        <div class="pack__desc">纯黑白、细边框，工程审美到极致</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="canvasarea">
+    <div class="board demo-home board--selected">
+      <div class="board__label"><b>首页</b></div>
+      <div style="padding:24px 20px; display:grid; gap:12px;">
+        <div class="sk sk--w60" style="height:12px; width:40%; background:#d8d8d8"></div>
+        <div class="sk" style="height:120px; border-radius:10px; background:#f0f0f0"></div>
+        <div class="sk"></div><div class="sk sk--w60"></div>
+        <div class="sk" style="height:64px; border-radius:8px; background:#f0f0f0"></div>
+        <div class="sk"></div><div class="sk sk--w60"></div>
+      </div>
+    </div>
+    <div class="board demo-login">
+      <div class="board__label"><b>登录</b></div>
+      <div style="padding:28px 22px; display:grid; gap:12px;">
+        <div class="sk" style="width:44px; height:44px; border-radius:10px; background:#e8e8e8"></div>
+        <div class="sk" style="height:11px; width:55%; background:#d8d8d8"></div>
+        <div class="sk" style="height:30px; margin-top:8px; border-radius:6px; background:#efefef"></div>
+        <div class="sk" style="height:30px; border-radius:6px; background:#efefef"></div>
+        <div class="sk" style="height:30px; margin-top:4px; border-radius:6px; background:#191918"></div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="inspector">
+    <div class="inspector__title">画板</div>
+    <div class="fieldrow"><span class="fieldrow__label">名称</span><div class="fieldrow__input">首页</div></div>
+    <div class="fieldrow"><span class="fieldrow__label">尺寸</span><div class="fieldrow__input">320 × 640</div></div>
+    <div class="fieldrow"><span class="fieldrow__label">位置</span><div class="fieldrow__input">X 28 · Y 90</div></div>
+  </aside>
+</body>
+</html>

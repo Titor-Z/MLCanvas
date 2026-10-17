@@ -1,105 +1,92 @@
 <script lang="ts">
   import { designStore } from "../designStore.svelte.js";
+  import AgentChat from "./AgentChat.svelte";
+  import { Icon } from "../../lib/icons.js";
 
   const selected = $derived(designStore.selected);
+  const drawer = $derived(designStore.drawer);
 </script>
 
-<aside class="inspector" data-id="inspector">
-  <div class="inspector__section" data-id="panel-board">
-    <div class="inspector__title"><span>画板</span></div>
-    {#if selected}
-      <div class="fieldrow">
-        <span class="fieldrow__label">名称</span>
-        <input class="fieldrow__input" value={selected.name} readonly />
-      </div>
-      <div class="fieldrow">
-        <span class="fieldrow__label">尺寸</span>
-        <input class="fieldrow__input fieldrow__input--num" value={selected.width} readonly />
-        <span class="fieldrow__x">×</span>
-        <input class="fieldrow__input fieldrow__input--num" value={selected.height} readonly />
-      </div>
-    {:else}
-      <div class="inspector__empty">在画布中选择一个画板</div>
-    {/if}
-  </div>
-
-  <div class="inspector__section" data-id="panel-agent">
-    <div class="inspector__title">
-      <span>Agent 协作</span>
-      <span class="inspector__state"><i></i>空闲</span>
+<aside class="pane" class:pane--board={drawer === "board"} data-id="inspector">
+  {#if drawer === "agent"}
+    <AgentChat />
+  {:else}
+    <div class="pane__head">
+      <b>画板</b>
+      <button class="pane__close" title="收起" onclick={() => (designStore.drawer = null)}>
+        <Icon name="close" />
+      </button>
     </div>
-    <div class="log">
-      {#if designStore.logs.length === 0}
-        <div class="log__empty">监听项目文件变化中…</div>
-      {:else}
-        {#each designStore.logs as entry (entry.time + entry.text)}
-          <div class="log__item">
-            <span class="log__time">{entry.time}</span>
-            <span class="log__text">{entry.text}</span>
+    <div class="pane__body">
+      {#if selected}
+        <div class="group">
+          <div class="group__title">{selected.name}</div>
+          <div class="kv">
+            <span class="kv__k">尺寸</span>
+            <span class="kv__v kv__v--num">{selected.width}</span>
+            <span class="kv__x">×</span>
+            <span class="kv__v kv__v--num">{selected.height}</span>
           </div>
-        {/each}
+          <div class="kv">
+            <span class="kv__k">位置</span>
+            <span class="kv__v kv__v--num">{Math.round(selected.x)}</span>
+            <span class="kv__x">,</span>
+            <span class="kv__v kv__v--num">{Math.round(selected.y)}</span>
+          </div>
+        </div>
+        <div class="group">
+          <div class="group__title">显示</div>
+          <div class="kv">
+            <span class="kv__k">标签</span>
+            <span class="kv__v">{designStore.showLabels ? "显示" : "隐藏"}</span>
+          </div>
+        </div>
+      {:else}
+        <div class="pane__empty">在画布中选择一个画板</div>
       {/if}
     </div>
-  </div>
-
-  <div class="inspector__spacer"></div>
-  <div class="inspector__footer">
-    <input class="inspector__input" placeholder="给 Agent 写张便签…" disabled />
-    <div class="inspector__send" title="V2 提供">
-      <svg viewBox="0 0 13 13"><path d="M1.5 6.5 L11.5 1.5 L8 11.5 L5.5 7z"/></svg>
-    </div>
-  </div>
+  {/if}
 </aside>
 
 <style>
-  .inspector {
+  .pane {
     grid-area: inspector;
-    background: var(--chrome);
+    background: var(--panel);
     border-left: 1px solid var(--line);
     display: flex; flex-direction: column;
     overflow: hidden;
+    min-width: 0;
   }
-  .inspector__section { padding: 12px 14px; border-bottom: 1px solid var(--line); }
-  .inspector__title {
-    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
-    color: var(--text-3); margin-bottom: 10px;
-    display: flex; align-items: center; justify-content: space-between;
+  .pane__head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 13px 16px 11px;
+    flex-shrink: 0;
   }
-  .inspector__state {
-    display: flex; align-items: center; gap: 5px;
-    letter-spacing: 0; text-transform: none;
-    font-size: 10px; color: var(--text-2);
-  }
-  .inspector__state i { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
-  .fieldrow { display: flex; align-items: center; gap: 8px; height: 30px; margin-bottom: 6px; }
-  .fieldrow__label { width: 30px; flex-shrink: 0; color: var(--text-2); }
-  .fieldrow__input {
-    flex: 1;
-    height: 28px; padding: 0 9px;
-    font-size: 12px;
-  }
-  .fieldrow__input--num { font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
-  .fieldrow__x { color: var(--text-3); }
-  .inspector__empty { font-size: 12px; color: var(--text-3); }
-
-  .log { display: grid; gap: 8px; }
-  .log__empty { font-size: 11px; color: var(--text-3); }
-  .log__item { display: flex; gap: 8px; align-items: baseline; font-size: 11px; line-height: 1.4; }
-  .log__time { color: var(--text-3); flex-shrink: 0; font-family: "SF Mono", Menlo, monospace; font-size: 10px; }
-  .log__text { color: var(--text-2); }
-
-  .inspector__spacer { flex: 1; }
-  .inspector__footer {
-    padding: 10px 14px;
-    border-top: 1px solid var(--line);
-    display: flex; gap: 8px;
-  }
-  .inspector__input { flex: 1; height: 30px; padding: 0 10px; font-size: 11px; }
-  .inspector__input:disabled { color: var(--text-3); }
-  .inspector__send {
-    width: 30px; height: 30px; flex-shrink: 0;
+  .pane__head b { font-size: 13px; font-weight: 600; }
+  .pane__close {
+    margin-left: auto;
+    width: 24px; height: 24px;
     display: grid; place-items: center;
-    background: var(--field); border-radius: var(--radius-btn);
+    border-radius: 6px;
+    color: var(--text-3);
+    transition: background 140ms ease-out, color 140ms ease-out;
   }
-  .inspector__send svg { width: 13px; height: 13px; fill: none; stroke: var(--text-3); stroke-width: 1.6; }
+  .pane__close:hover { background: rgba(255, 255, 255, 0.07); color: var(--text-2); }
+  .pane__body { padding: 2px 16px 16px; display: grid; gap: 14px; align-content: start; }
+  .group { display: grid; gap: 7px; }
+  .group__title { font-size: 11px; color: var(--text-2); }
+  .kv { display: flex; align-items: center; gap: 8px; }
+  .kv__k { width: 34px; font-size: 11.5px; color: var(--text-3); flex-shrink: 0; }
+  .kv__v {
+    flex: 1; height: 28px;
+    display: flex; align-items: center;
+    padding: 0 10px;
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    font-size: 11.5px;
+  }
+  .kv__v--num { justify-content: flex-end; font-variant-numeric: tabular-nums; font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
+  .kv__x { font-size: 10.5px; color: var(--text-3); }
+  .pane__empty { font-size: 12px; color: var(--text-3); }
 </style>

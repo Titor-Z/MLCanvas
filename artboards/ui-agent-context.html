@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="artboard" content="1300x820, x=15800, y=1900">
+  <title>对话 · 上下文环与命令</title>
+  <style>
+    /* ── 设计意图 ──
+       ① 上下文环坐在输入卡工具行里（模型 chip 右侧），环本身就是读数：不常驻数字。
+          颜色按占用率分四档：<60% 中性灰 / 60–85% 蓝 / >85% 橙 / >95% 红。
+       ② 点击环 → 浮层给明细（已用 / 上限、输入、输出、剩余余量），并给「压缩上下文」入口。
+       ③ 输入框以 / 开头 → 命令面板浮在输入卡上方，↑↓ 选，Enter 执行，Esc 关。 */
+    :root {
+      --chrome: #202024;
+      --panel: #242429;
+      --field: #2a2a31;
+      --raise: #2c2c33;
+      --raise-2: #34343c;
+      --canvas: #2f2f31;
+      --line: rgba(255, 255, 255, 0.09);
+      --line-2: rgba(255, 255, 255, 0.14);
+      --text: #ececf0;
+      --text-2: #a8a8b2;
+      --text-3: #7c7c88;
+      --accent: #4b9eff;
+      --accent-soft: rgba(75, 158, 255, 0.16);
+      --warn: #e0a03a;
+      --danger: #e05252;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1300px; height: 820px;
+      background: var(--canvas);
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      font-size: 12px;
+      color: var(--text);
+      user-select: none;
+      overflow: hidden;
+      padding: 30px 28px;
+      display: flex; gap: 26px;
+    }
+
+    .col { display: flex; flex-direction: column; gap: 12px; }
+    .col__label { font-size: 11px; color: #8c8c92; }
+    .col__label b { color: #c9c9ce; font-weight: 600; }
+
+    .panel {
+      width: 400px; height: 700px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.36), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    .pane__head { display: flex; align-items: center; gap: 8px; padding: 13px 16px 11px; flex-shrink: 0; }
+    .pane__head b { font-size: 13px; font-weight: 600; }
+    .state { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text-2); }
+    .state i { width: 6px; height: 6px; border-radius: 50%; background: #34c759; box-shadow: 0 0 0 3px rgba(52,199,89,0.14); }
+
+    .scroll { flex: 1; min-height: 0; padding: 4px 16px 12px; display: flex; flex-direction: column; gap: 13px; overflow: hidden; }
+    .me { align-self: flex-end; max-width: 84%; padding: 9px 13px; background: linear-gradient(180deg, #38414d, #313945); border: 1px solid rgba(255,255,255,0.09); border-radius: 13px 13px 4px 13px; font-size: 12.5px; line-height: 1.62; }
+    .ai { font-size: 13px; line-height: 1.72; color: var(--text); }
+    .ai code { font-family: "SF Mono", Menlo, monospace; font-size: 11.5px; padding: 1.5px 4px; background: rgba(255,255,255,0.08); border-radius: 4px; color: #d9e8ff; }
+
+    /* 压缩分隔标记 */
+    .compact {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 0;
+      font-size: 10.5px; color: var(--text-3);
+    }
+    .compact::before, .compact::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .compact b { font-weight: 500; color: var(--text-2); }
+    .compact__open { display: inline-flex; align-items: center; gap: 3px; color: var(--accent); }
+    .compact__open svg { width: 8px; height: 8px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+
+    /* 输入卡 */
+    .composer-wrap { flex-shrink: 0; padding: 0 12px 11px; background: linear-gradient(rgba(36,36,41,0), var(--panel) 26%); position: relative; }
+    .composer {
+      background: var(--raise);
+      border: 1px solid var(--line-2);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.34), 0 1px 0 rgba(255,255,255,0.08) inset;
+      display: flex; flex-direction: column;
+    }
+    .composer--focus { border-color: rgba(75,158,255,0.55); box-shadow: 0 8px 24px rgba(0,0,0,0.34), 0 0 0 3px rgba(75,158,255,0.14), 0 1px 0 rgba(255,255,255,0.08) inset; }
+    .composer__text { padding: 12px 13px 9px; min-height: 68px; font-size: 12.5px; line-height: 1.6; color: var(--text-2); }
+    .composer__text b { color: var(--text); font-weight: 400; }
+    .composer__text .slash { color: var(--accent); }
+    .caret { display: inline-block; width: 1px; height: 13px; background: var(--accent); vertical-align: -2px; }
+    .composer__bar { display: flex; align-items: center; gap: 6px; padding: 0 9px 9px 10px; }
+    .icon-btn { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; color: var(--text-2); }
+    .icon-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .chip { display: flex; align-items: center; gap: 5px; height: 24px; padding: 0 7px 0 8px; background: rgba(255,255,255,0.06); border-radius: 7px; font-size: 10.5px; color: var(--text-2); }
+    .chip svg { width: 8px; height: 8px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+    .chip--accent { color: #a8cdff; background: rgba(75,158,255,0.18); }
+    .composer__spacer { flex: 1; }
+    .send {
+      width: 28px; height: 28px; flex-shrink: 0;
+      display: grid; place-items: center;
+      border-radius: 50%;
+      background: var(--accent); color: #fff;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 2px 5px rgba(0, 0, 0, 0.28);
+      transition: background 140ms ease-out, transform 100ms ease-out;
+    }
+    .send svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* 上下文环 */
+    .ring { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; flex-shrink: 0; }
+    .ring svg { width: 20px; height: 20px; transform: rotate(-90deg); }
+    .ring circle { fill: none; stroke-width: 2.4; }
+    .ring .track { stroke: rgba(255, 255, 255, 0.12); }
+    .ring .val { stroke-linecap: round; }
+    .ring--low .val { stroke: #8e8e99; }
+    .ring--mid .val { stroke: var(--accent); }
+    .ring--high .val { stroke: var(--warn); }
+    .ring--full .val { stroke: var(--danger); }
+    .ring--on { background: rgba(255,255,255,0.07); }
+
+    /* 环浮层 */
+    .pop {
+      position: absolute; right: 12px; bottom: 156px; width: 264px;
+      background: #2a2a2e;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255,255,255,0.07) inset;
+      padding: 12px 13px 11px;
+      transform-origin: bottom right;
+    }
+    .pop__title { display: flex; align-items: baseline; gap: 6px; margin-bottom: 9px; }
+    .pop__title b { font-size: 12px; font-weight: 600; }
+    .pop__title em { margin-left: auto; font-style: normal; font-size: 10px; color: var(--text-3); }
+    .pop__bar { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; margin-bottom: 9px; }
+    .pop__fill { height: 100%; border-radius: 3px; background: var(--warn); }
+    .pop__rows { display: grid; gap: 5px; margin-bottom: 10px; }
+    .pop__row { display: flex; align-items: center; font-size: 10.5px; color: var(--text-2); }
+    .pop__row em { margin-left: auto; font-style: normal; color: var(--text); font-variant-numeric: tabular-nums; }
+    .pop__row--muted em { color: var(--text-2); }
+    .pop__note { font-size: 10px; color: var(--text-3); line-height: 1.55; padding: 8px 0 9px; border-top: 1px solid var(--line); }
+    .pop__act {
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      height: 28px; border-radius: 7px;
+      background: rgba(224, 160, 58, 0.16);
+      color: #e8bc72; font-size: 11px; font-weight: 600;
+    }
+
+    /* 命令面板 */
+    .palette {
+      position: absolute; left: 12px; right: 12px; bottom: 172px;
+      background: #2a2a2e;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      box-shadow: 0 18px 44px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.07) inset;
+      padding: 5px;
+    }
+    .palette__head { padding: 6px 8px 5px; font-size: 10px; color: var(--text-3); }
+    .cmd { display: flex; align-items: center; gap: 9px; padding: 8px 8px; border-radius: 7px; }
+    .cmd--on { background: rgba(255, 255, 255, 0.08); }
+    .cmd__icon { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 5px; background: rgba(255,255,255,0.06); color: var(--text-2); flex-shrink: 0; }
+    .cmd__icon svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    .cmd--on .cmd__icon { background: rgba(75,158,255,0.2); color: #a8cdff; }
+    .cmd__body { display: grid; gap: 2px; min-width: 0; }
+    .cmd__name { font-size: 11px; color: var(--text); }
+    .cmd__desc { font-size: 10px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cmd__key { margin-left: auto; font-size: 9.5px; color: var(--text-3); font-family: "SF Mono", Menlo, monospace; }
+
+    /* 环的四档色态（第一栏底部说明区） */
+    .legend { display: grid; gap: 10px; }
+    .legend__row { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-2); }
+    .legend__row b { width: 58px; font-weight: 500; color: var(--text); }
+    .legend__row span { color: var(--text-3); font-size: 10.5px; }
+  </style>
+</head>
+<body>
+  <!-- ① 环的四档 + 压缩分隔标记 -->
+  <div class="col">
+    <div class="col__label"><b>上下文环</b> · 四档色态</div>
+    <div class="panel">
+      <div class="pane__head"><b>设计助手</b><span class="state"><i></i>可用</span></div>
+      <div class="scroll">
+        <div class="me">给登录页补一版暗色，标题用规范里的字阶</div>
+        <div class="ai">暗色版已画好，沿用规范里的令牌：背景 <code>--color-background</code>、主行动 <code>--color-primary</code>。</div>
+
+        <div class="compact">
+          <b>已压缩前 18 轮</b> · 摘要 320 字
+          <span class="compact__open">查看 <svg viewBox="0 0 12 12"><path d="M4 2.5 7.5 6 4 9.5"/></svg></span>
+        </div>
+
+        <div class="ai">继续：按钮改成胶囊形，主色再亮一点。</div>
+      </div>
+      <div class="composer-wrap">
+        <div class="composer">
+          <div class="composer__text">描述你想要的界面…</div>
+          <div class="composer__bar">
+            <div class="icon-btn"><svg viewBox="0 0 14 14"><path d="M7 2.5v9M2.5 7h9"/></svg></div>
+            <div class="chip chip--accent">DeepSeek · V4.1 <svg viewBox="0 0 12 12"><path d="M3 4.5 6 7.5 9 4.5"/></svg></div>
+            <div class="composer__spacer"></div>
+            <div class="ring ring--low" title="上下文 24%">
+              <svg viewBox="0 0 24 24"><circle class="track" cx="12" cy="12" r="9"/><circle class="val" cx="12" cy="12" r="9" stroke-dasharray="13.6 56.5"/></svg>
+            </div>
+            <div class="send"><svg viewBox="0 0 16 16"><path d="M8 12.5V4M4.2 7.6 8 3.8l3.8 3.8"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend__row">
+        <div class="ring ring--low"><svg viewBox="0 0 24 24"><circle class="track" cx="12" cy="12" r="9"/><circle class="val" cx="12" cy="12" r="9" stroke-dasharray="13.6 56.5"/></svg></div>
+        <b>宽松</b><span>低于 60% · 中性灰，环几乎安静</span>
+      </div>
+      <div class="legend__row">
+        <div class="ring ring--mid"><svg viewBox="0 0 24 24"><circle class="track" cx="12" cy="12" r="9"/><circle class="val" cx="12" cy="12" r="9" stroke-dasharray="36.4 56.5"/></svg></div>
+        <b>适中</b><span>60–85% · 蓝，与主行动同色</span>
+      </div>
+      <div class="legend__row">
+        <div class="ring ring--high"><svg viewBox="0 0 24 24"><circle class="track" cx="12" cy="12" r="9"/><circle class="val" cx="12" cy="12" r="9" stroke-dasharray="49.9 56.5"/></svg></div>
+        <b>偏紧</b><span>85–95% · 橙，浮层给出压缩建议</span>
+      </div>
+      <div class="legend__row">
+        <div class="ring ring--full"><svg viewBox="0 0 24 24"><circle class="track" cx="12" cy="12" r="9"/><circle class="val" cx="12" cy="12" r="9" stroke-dasharray="55.4 56.5"/></svg></div>
+        <b>将满</b><span>高于 95% · 红，发送前提示压缩</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 点击环 → 明细浮层 -->
+  <div class="col">
+    <div class="col__label"><b>点击环</b> · 用量明细与压缩入口</div>
+    <div class="panel">
+      <div class="pane__head"><b>设计助手</b><span class="state"><i></i>可用</span></div>
+      <div class="scroll">
+        <div class="me">把这个项目的规范整理一下，顺便看了眼市场里的两套风格</div>
+        <div class="ai">规范已更新到 <code>design.md</code>：补了令牌对照与三条禁令。市场的两套风格我没动项目文件，只摘了签名特征供你参考。</div>
+        <div class="ai">还需要我把字阶换成更紧的一档吗？</div>
+      </div>
+
+      <div class="pop">
+        <div class="pop__title"><b>上下文</b><em>DeepSeek · 128K</em></div>
+        <div class="pop__bar"><div class="pop__fill" style="width: 88%"></div></div>
+        <div class="pop__rows">
+          <div class="pop__row">已用<em>112.6K / 128K</em></div>
+          <div class="pop__row pop__row--muted">其中输入<em>109.8K</em></div>
+          <div class="pop__row pop__row--muted">其中输出<em>2.8K</em></div>
+          <div class="pop__row">剩余余量<em>约 6 轮</em></div>
+        </div>
+        <div class="pop__note">对话越长，每次请求带的历史越多。压缩会把前面 18 轮整理成一段工作纪要，画板与规范不受影响。</div>
+        <div class="pop__act">
+          <svg viewBox="0 0 12 12" width="11" height="11" style="fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round"><path d="M2 4.5h8M2 7.5h8M4.5 2v8M7.5 2v8"/></svg>
+          压缩上下文
+        </div>
+      </div>
+
+      <div class="composer-wrap">
+        <div class="composer">
+          <div class="composer__text">描述你想要的界面…</div>
+          <div class="composer__bar">
+            <div class="icon-btn"><svg viewBox="0 0 14 14"><path d="M7 2.5v9M2.5 7h9"/></svg></div>
+            <div class="chip chip--accent">DeepSeek · V4.1 <svg viewBox="0 0 12 12"><path d="M3 4.5 6 7.5 9 4.5"/></svg></div>
+            <div class="composer__spacer"></div>
+            <div class="ring ring--high ring--on" title="上下文 88%">
+              <svg viewBox="0 0 24 24"><circle class="track" cx="12" cy="12" r="9"/><circle class="val" cx="12" cy="12" r="9" stroke-dasharray="49.9 56.5"/></svg>
+            </div>
+            <div class="send"><svg viewBox="0 0 16 16"><path d="M8 12.5V4M4.2 7.6 8 3.8l3.8 3.8"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 输入 / → 命令面板 -->
+  <div class="col">
+    <div class="col__label"><b>输入 /</b> · 命令面板</div>
+    <div class="panel">
+      <div class="pane__head"><b>设计助手</b><span class="state"><i></i>可用</span></div>
+      <div class="scroll">
+        <div class="me">把这个项目的规范整理一下</div>
+        <div class="ai">规范已更新：补了令牌对照与三条禁令，画板里的引用都对上了。</div>
+      </div>
+
+      <div class="palette">
+        <div class="palette__head">命令</div>
+        <div class="cmd cmd--on">
+          <div class="cmd__icon"><svg viewBox="0 0 12 12"><path d="M2 4.5h8M2 7.5h8"/></svg></div>
+          <div class="cmd__body">
+            <div class="cmd__name">压缩上下文</div>
+            <div class="cmd__desc">把前面的对话整理成工作纪要，画板不受影响</div>
+          </div>
+          <div class="cmd__key">/compact</div>
+        </div>
+        <div class="cmd">
+          <div class="cmd__icon"><svg viewBox="0 0 12 12"><path d="M2.5 6.5 5 9 9.5 3.5"/></svg></div>
+          <div class="cmd__body">
+            <div class="cmd__name">新对话</div>
+            <div class="cmd__desc">清空这一栏，开始一个新话题</div>
+          </div>
+          <div class="cmd__key">/new</div>
+        </div>
+        <div class="cmd">
+          <div class="cmd__icon"><svg viewBox="0 0 12 12"><path d="M2.5 5h7M2.5 8h4.5"/><path d="M8.5 1.5 10 3l-1.5 1.5"/></svg></div>
+          <div class="cmd__body">
+            <div class="cmd__name">装载设计手册</div>
+            <div class="cmd__desc">让助手重新读入项目规范与工作手册</div>
+          </div>
+          <div class="cmd__key">/conventions</div>
+        </div>
+      </div>
+
+      <div class="composer-wrap">
+        <div class="composer composer--focus">
+          <div class="composer__text"><span class="slash">/</span><span class="caret"></span></div>
+          <div class="composer__bar">
+            <div class="icon-btn"><svg viewBox="0 0 14 14"><path d="M7 2.5v9M2.5 7h9"/></svg></div>
+            <div class="chip chip--accent">DeepSeek · V4.1 <svg viewBox="0 0 12 12"><path d="M3 4.5 6 7.5 9 4.5"/></svg></div>
+            <div class="composer__spacer"></div>
+            <div class="ring ring--mid">
+              <svg viewBox="0 0 24 24"><circle class="track" cx="12" cy="12" r="9"/><circle class="val" cx="12" cy="12" r="9" stroke-dasharray="36.4 56.5"/></svg>
+            </div>
+            <div class="send"><svg viewBox="0 0 16 16"><path d="M8 12.5V4M4.2 7.6 8 3.8l3.8 3.8"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

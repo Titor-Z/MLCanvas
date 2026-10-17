@@ -1,0 +1,282 @@
+[
+  {
+    "name": "get_project",
+    "description": "获取聿Canvas 当前打开的项目名称与画板目录路径。会话开始时应第一个调用它确认工作目标，随后调用 get_conventions 装载工作流程与规范。之后对画板的所有读写都针对该项目，无需切换工作目录。用户尚未在聿Canvas 中打开项目时返回引导错误。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "list_artboards",
+    "description": "列出当前项目的所有画板（显示名、尺寸、画布位置）。动手前先看现状；交付前用它过一遍清单做全量复查。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "read_artboard",
+    "description": "读取指定画板的完整 HTML 源码",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "画板文件名，如 hello.html"
+        }
+      },
+      "required": [
+        "file_name"
+      ]
+    }
+  },
+  {
+    "name": "write_artboard",
+    "description": "写入画板源码（纯 HTML/CSS/JS）。画板是静态设计图：状态、变体、图标集都画在不同的画板上，不要把画板当交互原型写脚本逻辑。写入后应调用 screenshot_artboard 自检渲染效果。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "画板文件名"
+        },
+        "content": {
+          "type": "string",
+          "description": "完整 HTML 内容"
+        }
+      },
+      "required": [
+        "file_name",
+        "content"
+      ]
+    }
+  },
+  {
+    "name": "register_artboard",
+    "description": "注册（创建）一块新画板。画布是聿Canvas 与用户共同的设计工作台：要给用户看和讨论的东西（界面方案、组件、图标、状态稿）都画成正式画板，语义命名（<title> 用设计语言，不用 tmp/临时 等工程名），尺寸与位置用 <meta name=\"artboard\" content=\"宽x高, x=, y=\"> 声明。文件名 = 语义名-4位随机hash.html（如 home-a3f2.html，每次新建生成新 hash 永不复用——这样 design.md 画板索引里的陈旧条目不会被新画板误认领）；创建后必须在 design.md 的「画板索引」登记用途与状态。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "新画板文件名，必须以 .html 结尾，语义命名"
+        },
+        "title": {
+          "type": "string",
+          "description": "可选，画板标题（画布与列表显示的语义名称）"
+        }
+      },
+      "required": [
+        "file_name"
+      ]
+    }
+  },
+  {
+    "name": "delete_artboard",
+    "description": "删除画板（文件一并移除）。用于清理废弃稿；删除用户看过的正式方案前应先与用户确认。删除后必须同步更新 design.md 的「画板索引」（移除对应条目）。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "画板文件名"
+        }
+      },
+      "required": [
+        "file_name"
+      ]
+    }
+  },
+  {
+    "name": "rename_artboard",
+    "description": "重命名画板文件。语义命名是设计职责：名字要一眼看出这块画板画的是什么。重命名后必须同步更新 design.md 的「画板索引」中的文件名（hash 后缀保持不变）。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "现画板文件名"
+        },
+        "new_name": {
+          "type": "string",
+          "description": "新文件名，必须以 .html 结尾"
+        }
+      },
+      "required": [
+        "file_name",
+        "new_name"
+      ]
+    }
+  },
+  {
+    "name": "notify_ready",
+    "description": "完成一步修改后主动通知聿Canvas 刷新对应画板（兜底机制是文件监听）",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "画板文件名"
+        }
+      },
+      "required": [
+        "file_name"
+      ]
+    }
+  },
+  {
+    "name": "screenshot_artboard",
+    "description": "截取画板当前渲染结果为 PNG 并返回图像。每次修改画板后都应自检：对照工作流程第 4/5 步清单核查色彩、字阶、间距、色差、内容溢出与交互逻辑，发现违规改完再截，确认无误再做下一块。这是与用户画布同一条渲染管线的唯一有效截图途径。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "画板文件名"
+        }
+      },
+      "required": [
+        "file_name"
+      ]
+    }
+  },
+  {
+    "name": "query_element",
+    "description": "查询画板渲染结果中 (x, y) 坐标处的元素信息（标签、类名、文本、位置），坐标系为画板自身视口，单位 CSS 像素",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "画板文件名"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "file_name",
+        "x",
+        "y"
+      ]
+    }
+  },
+  {
+    "name": "get_design_spec",
+    "description": "读取当前项目的风格规范（design.md 风格法则 + tokens.css 设计令牌）。这是项目的品牌契约，画画板前应先调用它。两文件分工与裁决：值以 tokens.css 为准（画板用 <link rel=\"stylesheet\" href=\"../tokens.css\"> 引用令牌，改令牌全项目跟着变）；法则与设计禁令以 design.md 为准。尚无规范时返回引导错误——先与用户确认风格再 save_design_spec 写入。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "save_design_spec",
+    "description": "写入/更新项目风格规范，内容会显示在应用的资源面板。两文件零重叠，各管一件事。tokens_css 是唯一值源：语法 --<类别>-<名称>，变体 --<类别>-<名称>-<修饰>；类别前缀固定英文，名称强制英文。词汇表：--color-* 色彩（推荐角色 primary、primary-foreground、background、foreground、muted、border、card、success、warning、danger；值必须写字面色值，不做 var 引用）；--font-size-<名> 与 --font-weight-<名> 同名配对成字阶（推荐 display、heading、body、label、caption）；--space-<数字> 间距（4px 步进，space-1=4px）；其余合法类别 --radius-*、--shadow-*、--font-family-*、--leading-*、--motion-*（时长 ms）、--ease-*（曲线）。design_md 是风格法则，固定格式：首个 # 标题是风格名；引言之后首节固定为「令牌对照」——用 `- --完整令牌名：中文名` 列表给每个令牌登记中文名（应用界面据此显示中文，这是名称翻译不是令牌值；新增令牌时必须同步登记）；后续章节依次为视觉主题、设计原则、组件规则、动效、文案口吻、设计禁令；最后固定一节「画板索引」——`- <文件名>：<用途描述>；状态（定稿/草稿/已废弃/参考）` 逐块登记项目全部画板，Agent 据此知道用谁、更新谁、删谁。design.md 禁止出现具体令牌值（hex 色值、px 间距刻度），引用样式一律写令牌名；值的生成规则（如间距取 4 的倍数）可以写。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "design_md": {
+          "type": "string",
+          "description": "design.md 完整内容（风格法则，禁写令牌值，引用一律用令牌名）"
+        },
+        "tokens_css": {
+          "type": "string",
+          "description": "tokens.css 完整内容（:root 下的 CSS 变量，名称强制英文）"
+        }
+      },
+      "required": [
+        "design_md",
+        "tokens_css"
+      ]
+    }
+  },
+  {
+    "name": "save_component",
+    "description": "把画板中可复用的结构沉淀为组件（静态实物预览，显示在资源面板）。content 是 HTML 片段：单个根元素、自身尺寸即展示尺寸、不带页面级样式。组件用 BEM 命名空间类名自报身份：根类 mc-<组件>、变体 mc-<组件>--<修饰>（如 mc-btn 与 mc-btn--primary）；类名与文件名用英文 slug，<title> 写中文组件名（如「按钮 / 主要」）。样式自包含（<style> 跟随片段），取值一律 var(--令牌) 并带兜底值，保证组件预览与画板零依赖渲染。首行注释 <!-- 来自: 画板名 --> 标注来源画板。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "组件文件名，必须以 .html 结尾，语义命名"
+        },
+        "content": {
+          "type": "string",
+          "description": "组件 HTML 片段"
+        }
+      },
+      "required": [
+        "file_name",
+        "content"
+      ]
+    }
+  },
+  {
+    "name": "get_conventions",
+    "description": "读取聿Canvas Agent 工作手册（本应用的 AGENTS.md）：六步工作流程（确认目标→装载规范→生成画板→单板自检→全量复查→交付）、逐工具使用指导、工具排他纪律（渲染与截图一律用本工具集）、画板 meta 格式与文件命名、tokens.css 令牌命名规范（八类词汇表）、design.md 格式宪法（含令牌对照与画板索引）、mc- 组件 BEM 规范。会话开始与创建/修改任何设计文件前必读。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "list_skills",
+    "description": "列出内置设计技能参考库（按类别分组：设计品味、品牌色彩、动效、平台范式、文档演示等）。工作流程第 2 步装载规范时调用；做界面设计、动效、品牌类任务前，先在此检索方法论文档，再用 get_skill 读取全文。has_body 为 false 的是指针卡（仅描述与上游链接）。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "get_skill",
+    "description": "读取技能参考库中一篇文档的全文。name 来自 list_skills；file 省略返回该技能主文档 SKILL.md。指针卡的正文中附有上游仓库链接，可自行获取完整内容。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "技能名，来自 list_skills"
+        },
+        "file": {
+          "type": "string",
+          "description": "技能内文件名，省略返回主文档"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    }
+  },
+  {
+    "name": "list_design_systems",
+    "description": "列出内置风格包参考库（约 150 个，来自 Linear/Notion/Spotify/Stripe 等产品与主流流派）。应用某个风格前先在此检索，再用 get_design_system 读取该包的设计规范与令牌。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "get_design_system",
+    "description": "读取风格包内的单个文件全文。应用风格时：先读 DESIGN.md（风格法则）与 tokens.css（全部令牌值），把包的令牌翻译为本项目的命名规范（--color- 等角色制）后经 save_design_spec 写入。file 可选，省略返回 manifest.json。",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "包名，来自 list_design_systems"
+        },
+        "file": {
+          "type": "string",
+          "description": "包内文件名，如 DESIGN.md / tokens.css / components.html"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    }
+  }
+]

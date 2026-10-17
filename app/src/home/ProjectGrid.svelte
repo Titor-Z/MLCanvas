@@ -1,14 +1,16 @@
 <script lang="ts">
   import type { ProjectInfo } from "../lib/services/projectService.js";
+  import { shortenPath } from "../lib/services/projectService.js";
 
   interface Props {
     projects: ProjectInfo[];
     view: "grid" | "list";
     onnew: () => void;
     onopen: (name: string) => void;
+    ondelete: (name: string) => void;
   }
 
-  let { projects, view, onnew, onopen }: Props = $props();
+  let { projects, view, onnew, onopen, ondelete }: Props = $props();
 
   function relativeTime(secs: number): string {
     if (!secs) return "—";
@@ -28,8 +30,20 @@
       <div class="proj__name">新建项目</div>
     </button>
     {#each projects as p (p.name)}
-      <button class="proj" onclick={() => onopen(p.name)}>
-        <div class="proj__thumb"><i style="background:linear-gradient(135deg,#4b9eff,#7a5cff)"></i></div>
+      <button class="proj" onclick={() => onopen(p.name)} title={shortenPath(p.path)}>
+        <div class="proj__thumb">
+          <i style="background:linear-gradient(135deg,#4b9eff,#7a5cff)"></i>
+          <span
+            class="proj__del"
+            data-id="proj-del"
+            role="button"
+            tabindex="-1"
+            title="删除项目"
+            onclick={(e) => { e.stopPropagation(); ondelete(p.name); }}
+          >
+            <svg viewBox="0 0 16 16"><path d="M3 5h10M6.5 5V3.5h3V5M5 5l.6 8h4.8L11 5"/></svg>
+          </span>
+        </div>
         <div class="proj__name">{p.name}</div>
         <div class="proj__time">{relativeTime(p.updated_at)}</div>
       </button>
@@ -48,9 +62,22 @@
         <div class="prow__thumb"><i style="background:linear-gradient(135deg,#4b9eff,#7a5cff)"></i></div>
         <div class="prow__meta">
           <div class="prow__name">{p.name}</div>
-          <div class="prow__time">{relativeTime(p.updated_at)}</div>
+          <div class="prow__path">{shortenPath(p.path)}</div>
         </div>
-        <span class="prow__count">{p.artboards} 个画板</span>
+        <div class="prow__right">
+          <span class="prow__count">{p.artboards} 个画板</span>
+          <span class="prow__time">{relativeTime(p.updated_at)}</span>
+        </div>
+        <span
+          class="prow__del"
+          data-id="proj-del"
+          role="button"
+          tabindex="-1"
+          title="删除项目"
+          onclick={(e) => { e.stopPropagation(); ondelete(p.name); }}
+        >
+          <svg viewBox="0 0 16 16"><path d="M3 5h10M6.5 5V3.5h3V5M5 5l.6 8h4.8L11 5"/></svg>
+        </span>
       </button>
     {/each}
   </div>
@@ -81,6 +108,20 @@
   .proj__new svg { width: 18px; height: 18px; fill: none; stroke: var(--text-2); stroke-width: 1.5; stroke-linecap: round; }
   .proj__name { margin-top: 10px; font-size: 13px; font-weight: 600; line-height: 1.3; }
   .proj__time { margin-top: 2px; font-size: 11px; letter-spacing: 0.01em; line-height: 1.3; color: var(--text-3); }
+  /* 删除：悬停卡片时出现在缩略图右上角 */
+  .proj__del {
+    position: absolute; top: 8px; right: 8px;
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 6px;
+    color: var(--text-2);
+    opacity: 0;
+    transition: opacity 160ms ease-out;
+  }
+  .proj__del svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+  .proj:hover .proj__del { opacity: 1; }
+  .proj__del:hover { color: #ff6b6b; }
 
   /* 列表视图 */
   .recents--list { display: block; max-width: 640px; }
@@ -106,6 +147,20 @@
   .prow__new-thumb svg { width: 14px; height: 14px; fill: none; stroke: var(--text-2); stroke-width: 1.5; stroke-linecap: round; }
   .prow__meta { flex: 1; }
   .prow__name { font-size: 13px; font-weight: 600; line-height: 1.3; }
-  .prow__time { margin-top: 2px; font-size: 11px; letter-spacing: 0.01em; line-height: 1.3; color: var(--text-3); }
+  .prow__path { margin-top: 2px; font-size: 11px; letter-spacing: 0.01em; line-height: 1.3; color: var(--text-3); }
+  .prow__time { font-size: 11px; letter-spacing: 0.01em; line-height: 1.3; color: var(--text-3); }
+  .prow__right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
   .prow__count { font-size: 11px; color: var(--text-3); font-family: "SF Mono", Menlo, monospace; }
+  /* 删除：悬停行时出现在行尾 */
+  .prow__del {
+    width: 26px; height: 26px; flex-shrink: 0;
+    display: grid; place-items: center;
+    border-radius: 6px;
+    color: var(--text-2);
+    opacity: 0;
+    transition: opacity 160ms ease-out;
+  }
+  .prow__del svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+  .prow:hover .prow__del { opacity: 1; }
+  .prow__del:hover { color: #ff6b6b; }
 </style>

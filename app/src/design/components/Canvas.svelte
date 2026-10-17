@@ -4,30 +4,14 @@
 
   let canvasEl = $state<HTMLElement | null>(null);
 
+  // 画布元素引用交给 store（fitAll / 快捷键共用）
+  $effect(() => {
+    designStore.canvasEl = canvasEl;
+  });
+
   // 打开项目后自动 fit-all：按画板包围盒一次看全（自由画布）
   $effect(() => {
-    if (designStore.loading || designStore.boards.length === 0 || designStore.fitted) return;
-    if (!canvasEl) return;
-    const bs = designStore.boards;
-    const minX = Math.min(...bs.map((b) => b.x));
-    const minY = Math.min(...bs.map((b) => b.y));
-    const maxX = Math.max(...bs.map((b) => b.x + b.width));
-    const maxY = Math.max(...bs.map((b) => b.y + b.height));
-    // 可用空间 = 画布视口减去四周 padding（padding 已含在 clientWidth 里，两侧都要减）
-    const pad = 96 * 2;
-    const availW = canvasEl.clientWidth - pad;
-    const availH = canvasEl.clientHeight - pad;
-    const z = Math.min(availW / (maxX - minX), availH / (maxY - minY), 1);
-    designStore.zoom = Math.min(200, Math.max(20, Math.floor(z * 100)));
-    designStore.fitted = true;
-    // fit 后内容居中：取整产生的富余均匀分到两侧，而不是全堆在右边
-    requestAnimationFrame(() => {
-      const el = canvasEl!;
-      el.scrollTo({
-        left: (el.scrollWidth - el.clientWidth) / 2,
-        top: (el.scrollHeight - el.clientHeight) / 2,
-      });
-    });
+    designStore.fitAll(false);
   });
 
   // 画板列表点选：把目标画板滚动到视口中央

@@ -1,14 +1,21 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { listen } from "@tauri-apps/api/event";
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { projectService, type ProjectInfo } from "../lib/services/projectService.js";
+  import { agentPresence } from "../lib/agentPresence.svelte.js";
   import ProjectGrid from "./ProjectGrid.svelte";
   import NewProjectDialog from "./NewProjectDialog.svelte";
+  import DeleteProjectDialog from "./DeleteProjectDialog.svelte";
+  import SettingsDialog from "./SettingsDialog.svelte";
   import ViewToggle from "./ViewToggle.svelte";
 
   let projects = $state<ProjectInfo[]>([]);
-  let agentConnected = $state(false);
   let dialogOpen = $state(false);
+  let settingsOpen = $state(false);
+  let createError = $state("");
+  /** 待删除项目（非空时显示确认弹层） */
+  let deleting = $state<ProjectInfo | null>(null);
   let view = $state<"grid" | "list">(
     localStorage.getItem("mlcanvas-home-view") === "list" ? "list" : "grid",
   );
@@ -34,32 +41,65 @@
     }
   }
 
-  async function handleCreate(name: string) {
-    await projectService.create(name);
-    dialogOpen = false;
-    await refresh();
-    await projectService.open(name);
+  async function handleCreate(name: string, dir?: string) {
+    createError = "";
+    try {
+      await projectService.create(name, dir);
+      dialogOpen = false;
+      await refresh();
+      await projectService.open(name);
+    } catch (e) {
+      createError = String(e).replace(/^.*Error:\s*/, "").trim() || "创建项目失败";
+    }
   }
 
-  onMount(async () => {
-    try {
-      agentConnected = await projectService.agentConnected();
-    } catch {
-      agentConnected = false;
-    }
+  async function handleDelete(name: string) {
+    deleting = null;
+    await projectService.remove(name);
     await refresh();
+  }
+
+  /** 打开项目：选目录 → 挂回索引 → 打开 */
+  let openError = $state("");
+  async function handleOpen() {
+    openError = "";
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const dir = await invoke<string | null>("pick_directory");
+      if (!dir) return;
+      const p = await projectService.importProject(dir);
+      await refresh();
+      await projectService.open(p.name);
+    } catch (e) {
+      openError = String(e).replace(/^.*Error:\s*/, "").trim() || "打开项目失败";
+    }
+  }
+
+  onMount(() => {
+    agentPresence.init();
+    const unlistenState = listen<{ state: "idle" | "busy" }>("agent-state", (e) => {
+      agentPresence.setBusy(e.payload?.state === "busy");
+    });
+    const unlistenPresence = listen<{ client: string }>("agent-presence", (e) => {
+      agentPresence.setClient(e.payload?.client ?? "");
+    });
+    refresh();
+    return () => {
+      unlistenState.then((f) => f());
+      unlistenPresence.then((f) => f());
+    };
   });
 </script>
 
 <div class="home">
   <header class="titlebar" data-tauri-drag-region>
-    <div class="titlebar__logo"><i></i><span>MLCanvas</span></div>
+    <div class="titlebar__logo"><span class="logo-yu">聿</span><span class="logo-name">Canvas</span></div>
     <div class="titlebar__spacer" data-tauri-drag-region></div>
-    <div class="titlebar__btn" title="设置">
+    <div class="titlebar__btn" title="设置" data-id="btn-settings" onclick={() => (settingsOpen = true)}>
       <svg viewBox="0 0 16 16"><path d="M2 4.5h5.5M10.5 4.5H14M2 11.5h5.5M10.5 11.5H14"/><circle cx="9" cy="4.5" r="1.8"/><circle cx="5.5" cy="11.5" r="1.8"/></svg>
     </div>
     <div class="titlebar__agent" data-id="agent-status">
-      <i class:off={!agentConnected}></i>{agentConnected ? "Agent 已连接" : "Agent 未连接"}
+      <i class:off={agentPresence.display.tone === "off"} class:busy={agentPresence.display.tone === "busy"}></i>{agentPresence.display.text}
     </div>
     <div class="winctl">
       <button class="winctl__btn" title="最小化" onclick={() => getCurrentWindow().minimize()}>
@@ -81,15 +121,42 @@
 
       <div class="section__head">
         <span class="section__title">项目</span>
-        <ViewToggle {view} onset={setView} />
+        <div class="head__tools">
+          {#if openError}<span class="head__error">{openError}</span>{/if}
+          <button class="headopen" title="在磁盘上选择已有的项目文件夹" onclick={handleOpen}>
+            <svg viewBox="0 0 16 16"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h3l1.5 2h4.5A1.5 1.5 0 0 1 14 6.5v5A1.5 1.5 0 0 1 12.5 13h-9A1.5 1.5 0 0 1 2 11.5v-7Z"/></svg>打开
+          </button>
+          <ViewToggle {view} onset={setView} />
+        </div>
       </div>
 
-      <ProjectGrid {projects} {view} onnew={() => (dialogOpen = true)} onopen={(name) => projectService.open(name)} />
+      <ProjectGrid
+        {projects}
+        {view}
+        onnew={() => (dialogOpen = true)}
+        onopen={(name) => projectService.open(name)}
+        ondelete={(name) => (deleting = projects.find((p) => p.name === name) ?? null)}
+      />
     </div>
   </main>
 
   {#if dialogOpen}
-    <NewProjectDialog oncancel={() => (dialogOpen = false)} oncreate={handleCreate} />
+    <NewProjectDialog
+      error={createError}
+      oncancel={() => (dialogOpen = false)}
+      oncreate={handleCreate}
+    />
+  {/if}
+  {#if settingsOpen}
+    <SettingsDialog oncancel={() => (settingsOpen = false)} />
+  {/if}
+  {#if deleting}
+    <DeleteProjectDialog
+      name={deleting.name}
+      artboards={deleting.artboards}
+      oncancel={() => (deleting = null)}
+      onconfirm={handleDelete}
+    />
   {/if}
 </div>
 
@@ -107,12 +174,15 @@
     border-bottom: 1px solid var(--line);
     padding: 0 8px 0 12px;
   }
-  .titlebar__logo { display: flex; align-items: center; gap: 8px; }
-  .titlebar__logo i {
-    width: 18px; height: 18px; border-radius: 5px;
+  .titlebar__logo { display: flex; align-items: center; gap: 1px; }
+  .titlebar__logo .logo-yu {
+    font-family: "PingFang SC", sans-serif;
+    font-size: 17px; font-weight: 600; line-height: 1;
     background: linear-gradient(135deg, #4b9eff, #7a5cff);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
   }
-  .titlebar__logo span { font-size: 13px; font-weight: 700; }
+  .titlebar__logo .logo-name { font-size: 13px; font-weight: 700; }
   .titlebar__spacer { flex: 1; }
   .titlebar__btn {
     width: 28px; height: 28px;
@@ -133,6 +203,7 @@
   }
   .titlebar__agent i { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
   .titlebar__agent i.off { background: var(--text-3); }
+  .titlebar__agent i.busy { background: var(--accent); }
   .winctl { display: flex; align-items: center; gap: 2px; }
   .winctl__btn {
     width: 28px; height: 28px;
@@ -145,6 +216,20 @@
   .winctl__btn--close:hover { background: #e81123; color: #fff; }
 
   .main { overflow: hidden; padding: 64px 48px 48px; }
+
+  .head__tools { display: flex; align-items: center; gap: 10px; }
+  .head__error { font-size: 11px; color: #ff6b6b; }
+  .headopen {
+    height: 28px; padding: 0 12px;
+    display: flex; align-items: center; gap: 6px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-btn);
+    font-size: 12px; color: var(--text-2);
+    transition: border-color 160ms ease-out, color 160ms ease-out, transform 100ms ease-out;
+  }
+  .headopen svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+  .headopen:hover { border-color: rgba(255, 255, 255, 0.22); color: var(--text); }
+  .headopen:active { transform: scale(0.97); }
   .content { max-width: 640px; margin: 0 auto; }
 
   .hero__title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="artboard" content="960x640, x=10480, y=0">
+  <title>全局设置 · 模型（多配置）</title>
+  <style>
+    :root {
+      --chrome: #1e1e1e;
+      --bg: #262626;
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #e8e8e8;
+      --text-2: #9d9d9d;
+      --text-3: #6a6a6a;
+      --field: #2e2e2e;
+      --accent: #4b9eff;
+      --accent-soft: rgba(75, 158, 255, 0.14);
+      --ok: #34c759;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 960px; height: 640px;
+      background: var(--bg);
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      font-size: 12px;
+      color: var(--text);
+      user-select: none;
+      overflow: hidden;
+      position: relative;
+    }
+    .home { position: absolute; inset: 0; }
+    .home__titlebar { height: 44px; background: var(--chrome); border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 8px 0 12px; }
+    .home__logo { display: flex; align-items: center; gap: 1px; font-size: 13px; font-weight: 700; }
+    .home__logo .yu { font-size: 17px; font-weight: 600; background: linear-gradient(135deg, #4b9eff, #7a5cff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
+
+    .dialog {
+      position: absolute; top: 50px; left: 50%;
+      transform: translateX(-50%);
+      width: 720px; height: 528px;
+      background: var(--chrome);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .dialog__head {
+      height: 46px; flex-shrink: 0;
+      display: flex; align-items: center;
+      padding: 0 12px 0 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .dialog__title { font-size: 13px; font-weight: 700; letter-spacing: 0.01em; }
+    .dialog__close { margin-left: auto; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 6px; color: var(--text-3); }
+    .dialog__close svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+    .dialog__body { flex: 1; min-height: 0; display: grid; grid-template-columns: 148px 1fr; }
+
+    .nav { border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 1px; }
+    .nav__item { height: 30px; padding: 0 10px; display: flex; align-items: center; border-radius: 6px; font-size: 12.5px; color: var(--text-2); letter-spacing: 0.01em; }
+    .nav__item:hover { color: var(--text); }
+    .nav__item--active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .nav__spacer { flex: 1; }
+    .nav__foot { padding: 6px 10px; font-size: 10.5px; color: var(--text-3); font-family: "SF Mono", Menlo, monospace; }
+
+    .content { overflow-y: auto; padding: 22px 28px; }
+    .statusline { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--text-2); padding-bottom: 18px; }
+    .statusline i { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); flex-shrink: 0; }
+    .statusline b { color: var(--text); font-weight: 600; }
+
+    .section { margin-bottom: 24px; }
+    .section__label { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-3); margin-bottom: 4px; }
+    .row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .row--last, .section .row:last-child { border-bottom: none; }
+    .row__col { flex: 1; min-width: 0; }
+    .row__label { font-size: 12.5px; letter-spacing: 0.01em; }
+    .row__desc { font-size: 11px; color: var(--text-3); margin-top: 3px; line-height: 1.5; }
+    .row__side { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    .cfg { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .cfg .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .cfg .dot--on { background: var(--ok); }
+    .cfg .dot--off { background: var(--text-3); }
+    .cfg__vendor { font-size: 12.5px; font-weight: 600; flex-shrink: 0; }
+    .cfg__model { font-family: "SF Mono", Menlo, monospace; font-size: 11px; color: var(--text-2); }
+
+    .badge {
+      height: 20px; padding: 0 8px;
+      display: flex; align-items: center;
+      background: var(--accent-soft);
+      border-radius: 10px;
+      font-size: 10.5px; font-weight: 600; color: var(--accent);
+    }
+    .btn {
+      height: 24px; padding: 0 10px;
+      display: flex; align-items: center;
+      background: var(--field);
+      border-radius: 6px;
+      font-size: 11px; color: var(--text-2);
+      transition: color 150ms ease-out, transform 100ms ease-out;
+    }
+    .btn:hover { color: var(--text); }
+    .btn:active { transform: scale(0.97); }
+    .btn--ghost { background: none; color: var(--text-3); }
+    .btn--ghost:hover { color: var(--text); }
+
+    .addrow {
+      display: flex; align-items: center; gap: 9px;
+      padding: 12px 0;
+      font-size: 12px; color: var(--text-3);
+    }
+    .addrow svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+    .addrow:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="home">
+    <div class="home__titlebar">
+      <div class="home__logo"><span class="yu">聿</span>Canvas</div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+
+  <div class="dialog">
+    <div class="dialog__head">
+      <div class="dialog__title">设置</div>
+      <div class="dialog__close"><svg viewBox="0 0 10 10"><path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5"/></svg></div>
+    </div>
+    <div class="dialog__body">
+      <nav class="nav">
+        <div class="nav__item">通用</div>
+        <div class="nav__item nav__item--active">模型</div>
+        <div class="nav__item">数据</div>
+        <div class="nav__item">关于</div>
+        <div class="nav__spacer"></div>
+        <div class="nav__foot">0.4.0</div>
+      </nav>
+
+      <div class="content">
+        <div class="statusline">
+          <i></i>当前 <b>DeepSeek</b> · deepseek-v4-flash
+        </div>
+
+        <div class="section">
+          <div class="section__label">模型配置</div>
+          <div class="row">
+            <div class="row__col">
+              <div class="cfg">
+                <i class="dot dot--on"></i>
+                <span class="cfg__vendor">DeepSeek</span>
+                <span class="cfg__model">deepseek-v4-flash</span>
+              </div>
+            </div>
+            <div class="row__side">
+              <span class="badge">当前</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="row__col">
+              <div class="cfg">
+                <i class="dot dot--off"></i>
+                <span class="cfg__vendor">智谱 GLM</span>
+                <span class="cfg__model">glm-4.6</span>
+              </div>
+            </div>
+            <div class="row__side">
+              <div class="btn">设为当前</div>
+              <div class="btn btn--ghost">删除</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="row__col">
+              <div class="cfg">
+                <i class="dot dot--off"></i>
+                <span class="cfg__vendor">Kimi</span>
+                <span class="cfg__model">kimi-k2.6</span>
+              </div>
+            </div>
+            <div class="row__side">
+              <div class="btn">设为当前</div>
+              <div class="btn btn--ghost">删除</div>
+            </div>
+          </div>
+          <div class="addrow">
+            <svg viewBox="0 0 12 12"><path d="M6 1.5v9M1.5 6h9"/></svg>
+            添加模型配置
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section__label">说明</div>
+          <div class="row row--last">
+            <div class="row__col">
+              <div class="row__desc" style="margin-top: 0;">可以同时配置多个厂商与模型，点击某一行可修改密钥或换模型；对话面板顶部可随时切换当前使用的模型。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

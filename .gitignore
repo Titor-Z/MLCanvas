@@ -4,12 +4,17 @@ dist/
 
 # rust / tauri
 app/src-tauri/target/
+# tauri 生成的 ACL schema（构建期重建）
+app/src-tauri/gen/schemas/
 
-# icon 源图（由 scripts/gen-icon.mjs 生成）
-app/app-icon.png
+# 本地 agent 计划文件
+.zcode/
 
 # macOS
 .DS_Store
 
 # mcp server 依赖
 mcp/node_modules/
+
+# vendor 参考库（./dev.sh vendor 拉取，pinned commit 记录在 dev.sh）
+app/src-tauri/resources/opendesign/

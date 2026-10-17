@@ -1,5 +1,43 @@
 # CHANGELOG
 
+## 未发布
+
+多平台打包与发布。
+
+- GitHub Actions 发布工作流（`.github/workflows/release.yml`）：打 `v*` tag 触发，macOS（通用二进制 dmg/app）/ Linux（deb/appimage）/ Windows（nsis）三平台并行打包，产物进草稿 Release
+- 打包配置启用：`bundle.active` + `bundle.resources`（skills / design-systems 参考库随包分发），图标集补 icon.ico
+- 参考库定位改为「打包后读资源目录、开发时回退源码树」（resources.rs），`./dev.sh vendor` 改为按 pinned commit 直接 fetch（不再克隆整仓）
+- 跨平台：HOME/USERPROFILE 统一经 state::home_dir；Windows 一律 windows-subsystem = windows（不弹终端窗口）；非 macOS 的截图/目录选择器显式降级，不再挂起到超时
+- 应用图标：玻璃砖 + 品牌渐变「聿」字标（scripts/gen-icon.py，`npm run icon` 产全平台资产）
+- `./dev.sh run` 改为后台直启二进制（不再经 `open` 拉起终端窗口）
+
+## 0.5.0 — 2026-10-08
+
+全局设置（通用 / 模型 / 数据 / 关于）+ 多模型配置与公共模型库。
+
+- 设置弹窗重制为全尺寸对话框（720×528）——左导航四分区（通用 / 模型 / 数据 / 关于）+ 内容区，取代原「接入模型」单表单；主页与设计窗口共用
+- 多模型配置：可同时保存多份厂商 + 模型配置，其中一份为「当前使用」；列表行点按编辑、可设为当前 / 删除、「添加模型配置」新增
+- 添加/编辑表单：服务商预设（DeepSeek / 智谱 GLM / Kimi / 通义千问 / Anthropic / 自定义）自动带出接口地址；密钥本机明文存储（0600），可测试连接
+- 公共模型库（models.dev）：按接口地址匹配服务商，模型选择器支持搜索、上下文长度与推理/视觉标注、手动输入模型 ID；全量清单缓存 ~/YuCanvas/.models.json（24h TTL，网络失败回退旧缓存）
+- 配置存储升级为多配置结构 ~/YuCanvas/.settings.json（current + configs + default_parent），旧的单配置结构启动时自动迁移
+- 通用：新建项目默认位置可更换（写入 default_parent，新建项目随之生效）；界面语言 / 主题为预留项
+- 内置 Agent 回合循环改用「当前使用」配置；agent_get_settings / save_config / delete_config / set_current / set_default_parent / model_catalog 一组命令
+- 版本号统一为 0.5.0（Cargo / tauri.conf / package.json）
+
+## 0.4.0 — 2026-10-07
+
+内置 Agent：应用内 AI 对话，直接驱动画板工具 + 右栏双标签重构。
+
+- 内置 Agent（修订 why.md「对话在 Agent 侧」定稿）：用户在设置里接入自己的模型即可在应用内对话，不再依赖外部 MCP 客户端；外部 MCP 通道保留，两路共用同一工具执行层
+- Rust 侧回合循环：流式调模型（SSE）→ 解析 tool_calls → 进程内直调 ws_server::handle_request（会话契约 / busy 状态 / 活动流归属自动继承）→ 结果喂回模型，上限 25 轮；支持停止（工具步骤间生效）
+- 双协议适配：OpenAI 兼容（自定义接口地址，覆盖 DeepSeek/GLM/Kimi/Qwen/Ollama 等）+ Anthropic（Claude）；mcp_tools.json 复用为内置助手的工具 schema
+- 模型配置持久化 ~/YuCanvas/.settings.json（0600 权限），设置弹窗（主页设置按钮 + Agent 面板空态入口）含厂商预设、测试连接；系统提示词内嵌项目上下文与手册指引
+- 右栏重构为双标签「画板 / Agent」：Agent 标签 = 设计助手对话流（用户气泡 / 助手文本 / 工具步骤实时行 / 流式打字机）+ 可折叠活动记录 + 可用输入框（原便签占位转正）；画板标签 = 原属性检查器
+- Agent 面板空态三态：未接入模型（接入主行动）/ 未打开项目（会话契约表达）/ 就绪引导（问候 + 建议开场）
+- 对话历史按项目持久化 localStorage（上限 60 条）；历史只带文字，工具过程为展示层
+- 已知边界：screenshot_artboard 只确认截图成功、不喂图（V1 无多模态，自查靠画板源码 + query_element）；取消在工具步骤间生效；工具循环串行
+- 设计稿：ui-agent-chat / ui-agent-states / ui-agent-settings 三块（已登记画板索引并同步仓库）
+
 ## 0.1.0 — 2026-09-29
 
 V1 最小链路 + MCP 接入（首个可用版本）。
@@ -10,6 +48,18 @@ V1 最小链路 + MCP 接入（首个可用版本）。
 - MCP：mcp/server.mjs（stdio, MCP SDK）↔ 应用内 TCP 桥（127.0.0.1:9915, NDJSON）
 - 7 个 MCP 工具：list/read/write/register_artboard、notify_ready、screenshot_artboard、query_element
 - 截图器：隐藏窗口加载画板 + WKWebView takeSnapshot（objc2 绑定），返回 PNG；query_element 用 elementFromPoint 经事件回传
+
+## 0.3.0 — 2026-10-04
+
+品牌更名「聿Canvas / YuCanvas」+ 品牌图标体系。
+
+- 项目更名：聿（yù），甲骨文本义为笔——Agent 就是这支「聿」；productName 用 ASCII 的 YuCanvas，UI 显示「聿Canvas」
+- 品牌图标体系：桌面图标 = AI 渲染原图（层叠玻璃窗口砖）按饱和度描边抠图，824 圆角砖居中 1024 透明画布，tauri icon 产全平台资产；标题栏字标 = 真字形「聿」+ 品牌渐变（几何 SVG 近似与位图缩 18px 两案均否）
+- 数据根目录迁移：~/MLCanvas → ~/YuCanvas，启动时一次性迁移（rename 优先、逐项搬移兜底、索引绝对路径前缀改写、幂等）
+- 画板中间拦截层：应用内画板资源服务（127.0.0.1:9917，防穿越/MIME/可见 404）统一画布与截图审查管线的画板加载，`<link href="../tokens.css">` 真正生效；服务时注入画板运行时（导航拦截 + 样式失败黄点 + postMessage 桥）
+- Agent 工作手册：get_conventions 升级为六步工作流程（确认目标→装载规范→生成→单板自检→全量复查→交付）+ 逐工具使用指导 + 工具排他纪律；工具描述与回执改为流程钩子
+- 标题栏字标改真字形「聿」+ 品牌渐变（几何 SVG 近似与位图缩放两案均否）；桌面图标用 AI 渲染原图抠图产全平台资产
+- 新建项目默认目录模板同步改 ~/YuCanvas；MCP 工具描述、窗口标题、关于菜单等品牌文案全量更新
 
 ## 0.2.0 — 2026-09-30
 

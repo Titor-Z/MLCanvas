@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="artboard" content="780x600">
+<title>组件浮层预览 · 悬停态</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 780px; height: 600px;
+    background: #1a1a1c;
+    font-family: -apple-system, 'PingFang SC', sans-serif;
+    color: #e8e8e8;
+    position: relative;
+    overflow: hidden;
+  }
+  /* 左：面板局部（组件区语境） */
+  .slice {
+    width: 299px; height: 568px;
+    background: #232326;
+    position: absolute; left: 16px; top: 16px;
+    padding: 14px 0;
+  }
+  .sec {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 14px 10px;
+    font-size: 10px; letter-spacing: 1px;
+    color: #86868b;
+  }
+  .sec .count { margin-left: auto; font-family: 'SF Mono', Menlo, monospace; font-size: 9px; }
+  .cgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 14px; }
+  .ccard { min-width: 0; }
+  .ccard__tile {
+    height: 62px; border-radius: 7px;
+    background: #f4f4f1;
+    display: grid; place-items: center;
+    border: 1px solid rgba(255,255,255,.08);
+    margin-bottom: 6px;
+  }
+  .ccard--hover .ccard__tile { border-color: rgba(255,255,255,.35); }
+  .ccard__name { font-size: 11px; color: #d0d0d0; }
+  .ccard__src { font-size: 9px; color: #86868b; margin-top: 1px; }
+  .m-btn {
+    height: 34px; padding: 0 18px;
+    display: inline-flex; align-items: center;
+    background: #111; color: #f4f4f1;
+    border-radius: 6px; font-size: 14px; font-weight: 600;
+  }
+  .m-btn--ghost { background: #fff; color: #111; border: 1px solid #c9c9c2; }
+
+  /* 悬停浮层：从卡片原点浮出，无遮罩，米白样张 1:1 实物 */
+  .pop {
+    position: absolute;
+    left: 96px; top: 226px;
+    width: 260px;
+    background: #2a2a2e;
+    border-radius: 10px;
+    padding: 18px 16px 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.55);
+  }
+  .pop::before {
+    /* origin 提示：浮层与卡片的空间联系 */
+    content: ""; position: absolute; bottom: -6px; left: 36px;
+    width: 12px; height: 12px; background: #2a2a2e;
+    transform: rotate(45deg); border-radius: 2px;
+  }
+  .pop__stage {
+    display: grid; place-items: center;
+    min-height: 64px;
+  }
+  .pop__meta {
+    margin-top: 12px; padding-top: 9px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .pop__meta .cn { font-size: 11px; color: #e8e8e8; font-weight: 600; }
+  .pop__meta .src { font-size: 9px; color: #86868b; }
+  .pop__meta .dim {
+    margin-left: auto; font-size: 9px; color: #8a8a8a;
+    font-family: 'SF Mono', Menlo, monospace;
+  }
+  .pop__badge {
+    position: absolute; top: 8px; right: 10px;
+    font-size: 8px; font-weight: 700; letter-spacing: .5px;
+    color: #a0a0a0;
+    border: 1px solid rgba(255,255,255,.22); border-radius: 4px; padding: 1px 5px;
+  }
+
+  .notes { position: absolute; left: 340px; top: 16px; width: 420px; }
+  .note { margin-bottom: 18px; }
+  .note h3 { font-size: 13px; color: #fff; margin-bottom: 4px; }
+  .note h3 span { color: #4b9eff; }
+  .note p { font-size: 11px; line-height: 1.7; color: #a0a0a0; }
+  .note p b { color: #e8e8e8; font-weight: 600; }
+  .laws { margin-top: 8px; padding-top: 10px; border-top: 1px solid #333; }
+  .laws p { margin-bottom: 8px; }
+  .laws b { color: #e8e8e8; }
+</style>
+</head>
+<body>
+
+  <div class="slice">
+    <div class="sec"><span>组件</span><span class="count">4</span></div>
+    <div class="cgrid">
+      <div class="ccard">
+        <div class="ccard__tile"><span class="m-btn">按钮文字</span></div>
+        <div class="ccard__name">按钮 / 主要</div>
+        <div class="ccard__src">来自 首页</div>
+      </div>
+      <div class="ccard">
+        <div class="ccard__tile"><span class="m-btn m-btn--ghost">按钮文字</span></div>
+        <div class="ccard__name">按钮 / 次要</div>
+        <div class="ccard__src">来自 设置</div>
+      </div>
+      <div class="ccard ccard--hover">
+        <div class="ccard__tile"><span class="m-btn m-btn--ghost">按钮文字</span></div>
+        <div class="ccard__name">按钮 / 次要</div>
+        <div class="ccard__src">来自 设置</div>
+      </div>
+      <div class="ccard">
+        <div class="ccard__tile" style="font-size:8px;color:#a0a0a0">顶部导航 · 39%</div>
+        <div class="ccard__name">顶部导航</div>
+        <div class="ccard__src">来自 首页</div>
+      </div>
+    </div>
+    <!-- 悬停浮层：1:1 实物 -->
+    <div class="pop">
+      <span class="pop__badge">1 : 1</span>
+      <div class="pop__stage"><span class="m-btn m-btn--ghost">按钮文字</span></div>
+      <div class="pop__meta">
+        <span class="cn">按钮 / 次要</span>
+        <span class="src">来自 设置</span>
+        <span class="dim">92 × 34</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <h3><span>交互</span> · 悬停浮层，无遮罩</h3>
+      <p>悬停卡片 → 浮层从卡片原点浮出（origin-aware，120ms scale-in）；移开即收；连续扫过卡片无延迟。轻、快、不阻塞——浏览流不断。</p>
+    </div>
+    <div class="note">
+      <h3><span>内容</span> · 1:1 实物 + 三行元信息</h3>
+      <p>组件按<b>实际尺寸</b>渲染（超出屏幕才等比缩并标注），组件直接坐在浮层表面上——少一层盒子，材质本身即是舞台；下方名称 / 来源 / <b>实际尺寸 W×H</b>——与缩略图的缩放比徽标互为诚实：一个说缩了多少，一个说原样多大。</p>
+    </div>
+    <div class="note">
+      <h3><span>不做</span> · 点击 lightbox 后置</h3>
+      <p>带遮罩的点击放大是低频重交互，等"细看大组件"的真刚需出现再加，不为它增加常驻复杂度。</p>
+    </div>
+    <div class="note laws">
+      <p><b>skill 依据</b>：Emil「popovers origin-aware」——浮层从触发原点生长，空间关系不断；Apple「separate to keep flow」——非阻塞面板不加遮罩，保持浏览流；可供性诚实——缩放比徽标 ↔ 1:1 实物 + 尺寸标注，两端都说真话。</p>
+    </div>
+  </div>
+
+</body>
+</html>

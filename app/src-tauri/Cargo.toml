@@ -1,6 +1,6 @@
 [package]
 name = "mlcanvas"
-version = "0.1.0"
+version = "0.5.0"
 edition = "2021"
 
 [build-dependencies]
@@ -12,12 +12,19 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 notify = "8"
 base64 = "0.22"
+# 内置 Agent 调模型服务：流式走 chunk()，不引 stream/futures 特性；macOS 走系统 TLS
+reqwest = { version = "0.12", default-features = false, features = ["json", "native-tls"] }
+
+# tauri 模板默认 feature：codegen 依据它决定是否把 dist 内嵌进二进制。
+# 没有它，plain cargo build 产出"等 dev server"的空资产二进制（白屏 asset not found）。
+[features]
+custom-protocol = ["tauri/custom-protocol"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = "0.6"
 objc2 = "0.6"
-objc2-foundation = { version = "0.3", features = ["NSGeometry", "NSString", "NSData", "NSDictionary", "NSError"] }
-objc2-app-kit = { version = "0.3", features = ["NSApplication", "NSBitmapImageRep", "NSColor", "NSEvent", "NSGraphics", "NSGraphicsContext", "NSImage", "NSImageRep", "NSResponder"] }
+objc2-foundation = { version = "0.3", features = ["NSGeometry", "NSString", "NSData", "NSDictionary", "NSError", "NSURL", "NSArray"] }
+objc2-app-kit = { version = "0.3", features = ["NSApplication", "NSBitmapImageRep", "NSColor", "NSEvent", "NSGraphics", "NSGraphicsContext", "NSImage", "NSImageRep", "NSResponder", "NSOpenPanel", "NSSavePanel", "NSRunningApplication", "NSWindow", "NSWindowScripting"] }
 objc2-web-kit = { version = "0.3", features = ["WKSnapshotConfiguration", "WKWebView", "block2"] }
 
 [profile.dev]

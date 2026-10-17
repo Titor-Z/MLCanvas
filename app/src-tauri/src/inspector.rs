@@ -4,7 +4,7 @@
 //! 事件插件命令由 core:default 能力放行）。
 
 use serde_json::Value;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc;
 use std::sync::Mutex;
@@ -36,14 +36,6 @@ impl Inspector {
         }
     }
 
-    /// 读取画板声明的尺寸（parse_artboard_size，含缺省值）
-    fn artboard_size(&self, file_name: &str) -> Result<(u32, u32), String> {
-        let (path, _) = self.artboard_paths(file_name)?;
-        let html = std::fs::read_to_string(&path)
-            .map_err(|e| format!("读取画板失败: {e}"))?;
-        Ok(commands::parse_artboard_size(&html))
-    }
-
     /// 当前激活项目里某画板的（路径, 尺寸）
     fn artboard_paths(&self, file_name: &str) -> Result<(PathBuf, (u32, u32)), String> {
         let name = commands::validate_file_name(file_name)?;
@@ -66,11 +58,13 @@ impl Inspector {
     ) -> Result<(WebviewWindow, mpsc::Receiver<()>, (u32, u32)), String> {
         let (path, size) = self.artboard_paths(file_name)?;
 
-        let url = asset_url(&path)?;
+        // 与画布同一条渲染管线：资源服务优先（相对路径可解析），未启动回退 asset 协议
+        let url = tauri::Url::parse(&crate::artboard_http::page_url(&self.app, &path))
+            .map_err(|e| format!("画板地址非法: {e}"))?;
         let label = format!("mlcanvas-shot-{}", self.counter.fetch_add(1, Ordering::SeqCst));
         let (tx, rx) = mpsc::channel();
         let window = WebviewWindowBuilder::new(&self.app, &label, WebviewUrl::External(url))
-            .title("MLCanvas Inspector")
+            .title("聿Canvas Inspector")
             .visible(false)
             .inner_size(size.0 as f64, size.1 as f64)
             .on_page_load(move |_, payload| {
@@ -104,7 +98,8 @@ impl Inspector {
                     macos::request_snapshot(platform.inner(), size, tx);
                     #[cfg(not(target_os = "macos"))]
                     {
-                        let _ = (tx, size);
+                        // 非 macOS 尚无进程内截图后端：显式返回错误，不静默挂起
+                        let _ = macos::unsupported(tx);
                     }
                 })
                 .map_err(|e| format!("访问 webview 失败: {e}"))?;
@@ -174,6 +169,7 @@ impl Inspector {
     }
 
     /// 调试：截取应用现有窗口（main/design）的内容，返回 PNG 字节
+    /// 注意：不能在此调用 window.url() 等 wry 主线程方法——桥线程访问会 panic 杀死应用
     pub fn screenshot_window(&self, label: &str) -> Result<Vec<u8>, String> {
         let window = self
             .app
@@ -191,7 +187,9 @@ impl Inspector {
                 macos::request_snapshot(platform.inner(), size, tx);
                 #[cfg(not(target_os = "macos"))]
                 {
-                    let _ = (tx, size);
+                    // 非 macOS 尚无进程内截图后端：显式返回错误，不静默挂起
+                    let _ = size;
+                    let _ = macos::unsupported(tx);
                 }
             })
             .map_err(|e| format!("访问 webview 失败: {e}"))?;
@@ -199,6 +197,27 @@ impl Inspector {
         png_rx
             .recv_timeout(LOAD_TIMEOUT)
             .map_err(|_| "截图超时".to_string())?
+    }
+
+    /// 调试：在主线程回调里读取窗口当前 URL（wry 的 url() 不能从桥线程调）
+    pub fn window_url(&self, label: &str) -> Result<String, String> {
+        let window = self
+            .app
+            .get_webview_window(label)
+            .ok_or_else(|| format!("窗口不存在: {label}"))?;
+        let (tx, rx) = mpsc::channel::<String>();
+        window
+            .with_webview(move |platform| {
+                #[cfg(target_os = "macos")]
+                macos::request_url(platform.inner(), tx);
+                #[cfg(not(target_os = "macos"))]
+                {
+                    let _ = tx.send(String::new());
+                }
+            })
+            .map_err(|e| format!("访问 webview 失败: {e}"))?;
+        rx.recv_timeout(LOAD_TIMEOUT)
+            .map_err(|_| "读取 URL 超时".to_string())
     }
 
     /// 调试：在应用现有窗口里执行 JS（脚本需调用 result(v) 回传），复用 js_result 事件通道
@@ -231,19 +250,12 @@ impl Inspector {
     }
 }
 
-/// 本地文件路径 → asset 协议地址（macOS: asset://localhost/<percent-encoded path>）
-fn asset_url(path: &Path) -> Result<tauri::Url, String> {
-    let s = path.to_str().ok_or("画板路径不是合法 UTF-8")?;
-    let mut encoded = String::with_capacity(s.len());
-    for b in s.bytes() {
-        match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' | b'/' => {
-                encoded.push(b as char)
-            }
-            _ => encoded.push_str(&format!("%{b:02X}")),
-        }
+#[cfg(not(target_os = "macos"))]
+mod macos {
+    /// 非 macOS 平台的截图/查询后端占位：明确报错而不是让调用方等到超时
+    pub fn unsupported<T>(tx: std::sync::mpsc::Sender<Result<T, String>>) {
+        let _ = tx.send(Err("当前平台暂不支持进程内截图".to_string()));
     }
-    tauri::Url::parse(&format!("asset://localhost/{encoded}")).map_err(|e| e.to_string())
 }
 
 #[cfg(target_os = "macos")]
@@ -257,6 +269,16 @@ mod macos {
     use objc2_foundation::{NSError, NSPoint, NSRect, NSSize};
     use objc2_web_kit::{WKSnapshotConfiguration, WKWebView};
     use std::sync::mpsc::Sender;
+
+    /// 在主线程读取 WKWebView 当前 URL
+    pub fn request_url(wk_ptr: *mut std::ffi::c_void, tx: Sender<String>) {
+        let wk: &WKWebView = unsafe { &*(wk_ptr as *const WKWebView) };
+        let url = unsafe { wk.URL() }
+            .and_then(|u| u.absoluteString())
+            .map(|s| s.to_string())
+            .unwrap_or_default();
+        let _ = tx.send(url);
+    }
 
     /// 在主线程发起 takeSnapshot（裁剪到画板尺寸），完成后把 PNG 字节发回调用线程。
     pub fn request_snapshot(

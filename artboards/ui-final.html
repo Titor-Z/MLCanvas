@@ -24,7 +24,7 @@
       width: 1280px; height: 800px;
       display: grid;
       grid-template-rows: 44px 1fr;
-      grid-template-columns: 44px 210px 1fr 264px;
+      grid-template-columns: 44px 256px 1fr 264px;
       grid-template-areas:
         "titlebar titlebar titlebar titlebar"
         "tools nav canvas inspector";
@@ -76,16 +76,29 @@
     }
     .titlebar__spacer { flex: 1; }
     .zoom {
-      display: flex; align-items: center; gap: 3px;
-      height: 26px; padding: 0 8px;
+      display: flex; align-items: center; gap: 2px;
+      height: 26px; padding: 0 2px;
       border-radius: var(--radius);
       font-size: 12px; color: var(--text-2);
+      margin-right: 8px;
     }
-    .zoom__value { color: var(--text); min-width: 38px; text-align: center; }
-    .zoom::after {
-      content: ""; border: 3.5px solid transparent; border-top-color: var(--text-3);
-      margin-top: 3px;
+    .zoom__btn {
+      width: 22px; height: 24px;
+      display: grid; place-items: center;
+      border-radius: 4px;
+      color: var(--text-2);
+      font-size: 13px;
     }
+    .zoom__btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+    .zoom__value {
+      width: 30px; height: 24px;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding: 0 2px;
+      font-size: 12px; color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+    }
+    .zoom__unit { font-size: 12px; color: var(--text-2); margin-right: 2px; }
     .winctl { display: flex; align-items: center; gap: 2px; margin-left: 10px; }
     .winctl__btn {
       width: 28px; height: 28px;
@@ -178,26 +191,46 @@
       color: var(--text-3);
       display: flex; justify-content: space-between; align-items: center;
     }
-    .nav__add { color: var(--text-2); font-size: 14px; line-height: 1; }
     .nav__spacer { flex: 1; }
     .item {
       display: flex; align-items: center; gap: 10px;
-      padding: 6px 12px;
+      padding: 8px 12px;
       border-left: 2px solid transparent;
     }
+    /* 画板缩略图（取自方案B·OpenDesign）：统一小白卡 = 画板的微缩，投影分层，
+       渐变 hero + 内容条的通用示意；所有行一致，不携带具体内容 */
     .item__thumb {
-      width: 24px; height: 32px; flex-shrink: 0;
+      width: 30px; height: 38px; flex-shrink: 0;
       background: #fff; border-radius: 3px;
-      border: 1px solid var(--line);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
       position: relative; overflow: hidden;
     }
-    .item__thumb::before { content: ""; position: absolute; inset: 0 0 60%; background: linear-gradient(135deg, #1473e633, #7a5cff22); }
-    .item__thumb::after { content: ""; position: absolute; inset: 52% 16% auto; height: 4px; border-radius: 2px; background: #e2e6eb; }
+    .item__thumb::before { content: ""; position: absolute; inset: 0 0 55%; background: linear-gradient(135deg, #1473e688, #7a5cff66); }
+    .item__thumb::after { content: ""; position: absolute; inset: 52% 20% auto; height: 4px; border-radius: 2px; background: #d8dee6; }
     .item__name { font-size: 12px; color: var(--text-2); }
     .item--active { background: var(--accent-soft); border-left-color: var(--accent); }
     .item--active .item__name { color: var(--accent); font-weight: 600; }
     .comp { padding: 5px 12px 5px 14px; display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--text-2); }
     .comp i { width: 10px; height: 10px; border: 1.5px solid var(--text-3); border-radius: 3px; flex-shrink: 0; }
+    /* 右键菜单示意：重命名 / 删除（删除含确认态） */
+    .ctx {
+      position: fixed; z-index: 60;
+      min-width: 132px;
+      background: var(--chrome);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-btn);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      padding: 4px;
+    }
+    .ctx__item {
+      display: block; width: 100%;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px; text-align: left;
+      color: var(--text-2);
+    }
+    .ctx__item:hover { background: var(--accent); color: #fff; }
+    .ctx__item--danger:hover { background: #e5484d; }
 
     /* ── 画布 ── */
     .canvas { grid-area: canvas; position: relative; overflow: hidden; }
@@ -215,25 +248,26 @@
     .handle--sw { bottom: -4px; left: -4px; }
     .handle--se { bottom: -4px; right: -4px; }
 
-    .demo-home { width: 250px; height: 500px; left: 56px; top: 76px; }
+    .demo-home { width: 320px; height: 640px; left: 44px; top: 64px; }
     .dh__head { height: 42px; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid #eef0f3; }
     .dh__title { font-size: 13px; font-weight: 700; color: #1c1c22; }
-    .dh__hero { height: 140px; background: linear-gradient(135deg, #1473e6, #7a5cff); }
+    .dh__hero { height: 160px; background: linear-gradient(135deg, #1473e6, #7a5cff); }
     .dh__body { padding: 14px 16px; display: grid; gap: 11px; }
+    .dh__banner { height: 150px; border-radius: 10px; background: #eef1f5; }
     .sk { height: 11px; border-radius: 5px; background: #eef1f5; }
     .sk--w60 { width: 60%; }
     .dh__card { display: flex; gap: 10px; align-items: center; }
     .dh__avatar { width: 34px; height: 34px; border-radius: 50%; background: #e3e8ef; flex-shrink: 0; }
     .dh__lines { flex: 1; display: grid; gap: 6px; }
 
-    .demo-login { width: 190px; height: 380px; left: 350px; top: 118px; display: flex; flex-direction: column; align-items: center; padding: 32px 20px; }
+    .demo-login { width: 190px; height: 380px; left: 408px; top: 296px; display: flex; flex-direction: column; align-items: center; padding: 32px 20px; }
     .dl__logo { width: 42px; height: 42px; border-radius: 11px; background: #1473e6; opacity: 0.9; }
     .dl__title { margin-top: 14px; font-size: 14px; font-weight: 700; color: #1a1a1a; }
     .dl__sub { margin-top: 5px; font-size: 10px; color: #9aa3ad; text-align: center; }
     .dl__field { width: 100%; height: 30px; margin-top: 18px; border: 1px solid #e2e6ea; border-radius: 6px; }
     .dl__btn { width: 100%; height: 32px; margin-top: 11px; border-radius: 6px; background: #1473e6; opacity: 0.92; }
 
-    .demo-dash { width: 230px; height: 180px; left: 584px; top: 96px; padding: 14px; }
+    .demo-dash { width: 230px; height: 180px; left: 408px; top: 64px; padding: 14px; }
     .dd__title { font-size: 12px; font-weight: 700; color: #1c1c22; margin-bottom: 10px; }
     .dd__row { display: flex; gap: 10px; margin-bottom: 12px; }
     .dd__stat { flex: 1; height: 40px; border: 1px solid #edf0f3; border-radius: 7px; }
@@ -309,7 +343,12 @@
     <div class="titlebar__spacer"></div>
     <div class="titlebar__doc" data-id="doc-title">示例项目</div>
     <div class="titlebar__spacer"></div>
-    <div class="zoom" data-id="zoom"><span class="zoom__value">100%</span></div>
+    <div class="zoom" data-id="zoom">
+      <div class="zoom__btn" data-id="zoom-out" title="缩小">−</div>
+      <div class="zoom__value" data-id="zoom-value">100</div>
+      <span class="zoom__unit">%</span>
+      <div class="zoom__btn" data-id="zoom-in" title="放大">＋</div>
+    </div>
     <div class="winctl" data-id="winctl">
       <div class="winctl__btn" title="最小化"><svg viewBox="0 0 11 11"><path d="M1 5.5h9"/></svg></div>
       <div class="winctl__btn" title="最大化"><svg viewBox="0 0 11 11"><rect x="1.5" y="1.5" width="8" height="8" rx="1"/></svg></div>
@@ -319,7 +358,7 @@
 
   <!-- 「文件」菜单展开：仅示意菜单位置与层级 -->
   <div class="dropdown" data-id="menu-file-dropdown">
-    <div class="dropdown__item">新建画板<span class="dropdown__key">⌘N</span></div>
+    <div class="dropdown__item">新建项目<span class="dropdown__key">⌘N</span></div>
     <div class="dropdown__item">打开项目…<span class="dropdown__key">⌘O</span></div>
     <div class="dropdown__item dropdown__item--dim">导入<span class="dropdown__key">▸</span></div>
     <div class="dropdown__item dropdown__item--dim">导出<span class="dropdown__key">▸</span></div>
@@ -343,9 +382,14 @@
   <!-- 导航器 -->
   <aside class="nav">
     <div class="nav__search">搜索画板与组件</div>
-    <div class="nav__section"><span>画板 · 4</span><span class="nav__add">＋</span></div>
+    <div class="nav__section"><span>画板 · 4</span></div>
     <div class="item item--active" data-id="nav-home"><div class="item__thumb"></div><div class="item__name">首页</div></div>
     <div class="item"><div class="item__thumb"></div><div class="item__name">登录</div></div>
+    <!-- 右键菜单示意（挂在「登录」行上） -->
+    <div class="ctx" style="left:96px;top:150px">
+      <div class="ctx__item">重命名</div>
+      <div class="ctx__item ctx__item--danger">删除</div>
+    </div>
     <div class="item"><div class="item__thumb"></div><div class="item__name">仪表盘</div></div>
     <div class="item"><div class="item__thumb"></div><div class="item__name">设置</div></div>
     <div class="nav__section"><span>组件库</span></div>
@@ -366,6 +410,9 @@
       <div class="dh__body">
         <div class="sk sk--w60"></div>
         <div class="dh__card"><div class="dh__avatar"></div><div class="dh__lines"><div class="sk"></div><div class="sk sk--w60"></div></div></div>
+        <div class="dh__card"><div class="dh__avatar"></div><div class="dh__lines"><div class="sk"></div><div class="sk sk--w60"></div></div></div>
+        <div class="dh__banner"></div>
+        <div class="sk sk--w60"></div>
         <div class="dh__card"><div class="dh__avatar"></div><div class="dh__lines"><div class="sk"></div><div class="sk sk--w60"></div></div></div>
       </div>
       <div class="handle handle--nw"></div><div class="handle handle--ne"></div>
@@ -400,14 +447,14 @@
       </div>
       <div class="fieldrow">
         <span class="fieldrow__label">尺寸</span>
-        <div class="fieldrow__input fieldrow__input--num">250</div>
+        <div class="fieldrow__input fieldrow__input--num">320</div>
         <span class="fieldrow__x">×</span>
-        <div class="fieldrow__input fieldrow__input--num">500</div>
+        <div class="fieldrow__input fieldrow__input--num">640</div>
       </div>
     </div>
 
     <div class="inspector__section" data-id="panel-agent">
-      <div class="inspector__title"><span>Agent 协作</span><span class="inspector__state"><i></i>空闲</span></div>
+      <div class="inspector__title"><span>Agent 协作</span><span class="inspector__state"><i></i>ZCode 可用</span></div>
       <div class="log">
         <div class="log__item"><span class="log__time">14:32</span><span class="log__text">更新了<b>「首页」</b></span></div>
         <div class="log__item"><span class="log__time">14:31</span><span class="log__text">回读了<b>「首页」</b></span></div>
@@ -418,8 +465,8 @@
 
     <div class="inspector__spacer"></div>
     <div class="inspector__footer">
-      <div class="input" data-id="agent-input">告诉 Agent 要改什么…</div>
-      <div class="send" data-id="agent-send"><svg viewBox="0 0 13 13"><path d="M1.5 6.5 L11.5 1.5 L8 11.5 L5.5 7z"/></svg></div>
+      <div class="input" data-id="agent-input">给 Agent 写张便签…</div>
+      <div class="send" data-id="agent-send" title="V2 提供"><svg viewBox="0 0 13 13"><path d="M1.5 6.5 L11.5 1.5 L8 11.5 L5.5 7z"/></svg></div>
     </div>
   </aside>
 

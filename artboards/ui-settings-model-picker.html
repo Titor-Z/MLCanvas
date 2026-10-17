@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="artboard" content="960x640, x=11560, y=0">
+  <title>全局设置 · 模型库选择器</title>
+  <style>
+    :root {
+      --chrome: #1e1e1e;
+      --bg: #262626;
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #e8e8e8;
+      --text-2: #9d9d9d;
+      --text-3: #6a6a6a;
+      --field: #2e2e2e;
+      --lift: #2a2a2e;
+      --accent: #4b9eff;
+      --accent-soft: rgba(75, 158, 255, 0.14);
+      --ok: #34c759;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 960px; height: 640px;
+      background: var(--bg);
+      font-family: -apple-system, "PingFang SC", sans-serif;
+      font-size: 12px;
+      color: var(--text);
+      user-select: none;
+      overflow: hidden;
+      position: relative;
+    }
+    .home { position: absolute; inset: 0; }
+    .home__titlebar { height: 44px; background: var(--chrome); border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 8px 0 12px; }
+    .home__logo { display: flex; align-items: center; gap: 1px; font-size: 13px; font-weight: 700; }
+    .home__logo .yu { font-size: 17px; font-weight: 600; background: linear-gradient(135deg, #4b9eff, #7a5cff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
+
+    .dialog {
+      position: absolute; top: 50px; left: 50%;
+      transform: translateX(-50%);
+      width: 720px; height: 528px;
+      background: var(--chrome);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .dialog__head {
+      height: 46px; flex-shrink: 0;
+      display: flex; align-items: center;
+      padding: 0 12px 0 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .dialog__title { font-size: 13px; font-weight: 700; }
+    .dialog__close { margin-left: auto; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 6px; color: var(--text-3); }
+    .dialog__close svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+    .dialog__body { flex: 1; min-height: 0; display: grid; grid-template-columns: 148px 1fr; }
+    .nav { border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 1px; }
+    .nav__item { height: 30px; padding: 0 10px; display: flex; align-items: center; border-radius: 6px; font-size: 12.5px; color: var(--text-2); }
+    .nav__item--active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .nav__spacer { flex: 1; }
+    .nav__foot { padding: 6px 10px; font-size: 10.5px; color: var(--text-3); font-family: "SF Mono", Menlo, monospace; }
+
+    .content { position: relative; overflow: hidden; padding: 22px 28px; }
+    .statusline { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--text-2); padding-bottom: 18px; }
+    .statusline i { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); flex-shrink: 0; }
+    .statusline b { color: var(--text); font-weight: 600; }
+
+    .section__label { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-3); margin-bottom: 4px; }
+    .row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .row__label { font-size: 12.5px; }
+    .row__side { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .section { margin-bottom: 24px; }
+
+    .modelbtn {
+      display: flex; align-items: center; gap: 8px;
+      height: 27px; padding: 0 10px;
+      background: var(--accent-soft); border-radius: 6px;
+      font-size: 11.5px; color: var(--accent); font-weight: 600;
+      min-width: 218px;
+    }
+    .modelbtn .caret { margin-left: auto; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 5px solid var(--accent); }
+
+    /* ── 模型库下拉（展开态） ── */
+    .picker {
+      position: absolute;
+      right: 28px; top: 118px;
+      width: 340px;
+      background: var(--lift);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 9px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+    }
+    .picker__search {
+      margin: 9px;
+      height: 27px;
+      background: var(--field);
+      border-radius: 6px;
+      display: flex; align-items: center; gap: 7px;
+      padding: 0 9px;
+      font-size: 11px; color: var(--text-3);
+    }
+    .picker__search svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+    .picker__list { max-height: 218px; overflow: hidden; padding: 0 5px 5px; }
+    .pick {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 7px 8px;
+      border-radius: 6px;
+    }
+    .pick:hover, .pick--hover { background: rgba(255, 255, 255, 0.06); }
+    .pick__id { font-family: "SF Mono", Menlo, monospace; font-size: 11px; }
+    .pick__name { font-size: 10.5px; color: var(--text-3); }
+    .pick__tag {
+      font-size: 9px; font-weight: 600; color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 3px; padding: 1px 4px;
+      flex-shrink: 0;
+    }
+    .pick__ctx { margin-left: auto; flex-shrink: 0; font-family: "SF Mono", Menlo, monospace; font-size: 10px; color: var(--text-3); }
+    .pick--active .pick__id { color: var(--accent); font-weight: 600; }
+    .pick--active .pick__check { margin-left: auto; width: 11px; height: 11px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .pick--active .pick__ctx { margin-left: 6px; }
+    .picker__custom {
+      border-top: 1px solid var(--line);
+      padding: 8px 13px 9px;
+      font-size: 11.5px; color: var(--text-2);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .picker__custom svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
+    .picker__src {
+      padding: 0 13px 9px;
+      font-size: 10px; color: var(--text-3);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .picker__src i { width: 5px; height: 5px; border-radius: 50%; background: var(--ok); }
+    .dim { opacity: 0.45; }
+  </style>
+</head>
+<body>
+  <div class="home">
+    <div class="home__titlebar">
+      <div class="home__logo"><span class="yu">聿</span>Canvas</div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+
+  <div class="dialog">
+    <div class="dialog__head">
+      <div class="dialog__title">设置</div>
+      <div class="dialog__close"><svg viewBox="0 0 10 10"><path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5"/></svg></div>
+    </div>
+    <div class="dialog__body">
+      <nav class="nav">
+        <div class="nav__item">通用</div>
+        <div class="nav__item nav__item--active">模型</div>
+        <div class="nav__item">数据</div>
+        <div class="nav__item">关于</div>
+        <div class="nav__spacer"></div>
+        <div class="nav__foot">0.4.0</div>
+      </nav>
+
+      <div class="content dim">
+        <div class="statusline">
+          <i></i>已接入 <b>DeepSeek</b> · deepseek-v4-flash
+        </div>
+        <div class="section">
+          <div class="section__label">服务</div>
+          <div class="row"><div class="row__label">服务商</div></div>
+          <div class="row"><div class="row__label">接口地址</div></div>
+          <div class="row"><div class="row__label">密钥</div></div>
+        </div>
+        <div class="section">
+          <div class="section__label">模型</div>
+          <div class="row"><div class="row__label">模型</div></div>
+        </div>
+      </div>
+
+      <!-- 模型选择触发行（下拉锚点） -->
+      <div style="position: absolute; right: 28px; top: 74px;">
+        <div class="modelbtn">
+          deepseek-v4-flash
+          <span class="caret"></span>
+        </div>
+      </div>
+
+      <div class="picker">
+        <div class="picker__search">
+          <svg viewBox="0 0 12 12"><circle cx="5" cy="5" r="3.4"/><path d="M7.6 7.6 10.4 10.4"/></svg>
+          搜索模型…
+        </div>
+        <div class="picker__list">
+          <div class="pick">
+            <span class="pick__id">deepseek-v4.1-flash</span>
+            <span class="pick__tag">最新</span>
+            <span class="pick__ctx">1M</span>
+          </div>
+          <div class="pick">
+            <span class="pick__id">deepseek-v4.1-pro</span>
+            <span class="pick__ctx">1M</span>
+          </div>
+          <div class="pick">
+            <span class="pick__id">deepseek-reasoner</span>
+            <span class="pick__ctx">1M</span>
+          </div>
+          <div class="pick">
+            <span class="pick__id">deepseek-chat</span>
+            <span class="pick__ctx">1M</span>
+          </div>
+          <div class="pick pick--active">
+            <span class="pick__id">deepseek-v4-flash</span>
+            <svg class="pick__check" viewBox="0 0 12 12"><path d="M2 6.5 4.8 9.2 10 3.4"/></svg>
+            <span class="pick__ctx">1M</span>
+          </div>
+          <div class="pick">
+            <span class="pick__id">deepseek-v3.2</span>
+            <span class="pick__ctx">128K</span>
+          </div>
+        </div>
+        <div class="picker__custom">
+          <svg viewBox="0 0 12 12"><path d="M6 1.5v9M1.5 6h9"/></svg>
+          手动输入模型 ID
+        </div>
+        <div class="picker__src"><i></i>公共模型库实时更新 · models.dev</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

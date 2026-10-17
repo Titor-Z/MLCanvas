@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { artboardService } from "../../lib/services/artboardService.js";
   import { designStore } from "../designStore.svelte.js";
+  import { Icon } from "../../lib/icons.js";
 
   interface MenuItem {
     label: string;
@@ -21,8 +21,8 @@
     {
       label: "文件",
       items: [
-        { label: "新建画板", shortcut: "⌘N", action: () => createBoard() },
-        { label: "打开项目…", shortcut: "⌘O", action: () => focusHome() },
+        { label: "新建项目", shortcut: "⌘N", action: () => (designStore.dialog = "new") },
+        { label: "打开项目…", shortcut: "⌘O", action: () => designStore.openFromDisk() },
         { label: "导入", dim: true },
         { label: "导出", dim: true },
         { label: "项目设置", dim: true },
@@ -33,7 +33,7 @@
       items: [
         { label: "撤销", shortcut: "⌘Z", dim: true },
         { label: "重做", shortcut: "⇧⌘Z", dim: true },
-        { label: "偏好设置", dim: true },
+        { label: "设置…", shortcut: "⌘,", action: () => designStore.openSettings("general") },
       ],
     },
     {
@@ -67,25 +67,9 @@
     },
     {
       label: "帮助",
-      items: [{ label: "关于 MLCanvas", dim: true }],
+      items: [{ label: "关于聿Canvas", action: () => designStore.openSettings("about") }],
     },
   ]);
-
-  async function createBoard() {
-    const base = "未命名";
-    let n = 1;
-    const existing = new Set(designStore.boards.map((b) => b.file_name));
-    while (existing.has(`${base}-${n}.html`)) n += 1;
-    const file = `${base}-${n}.html`;
-    await artboardService.register(file, `未命名 ${n}`);
-    designStore.addLog(`新建了「未命名 ${n}」`);
-  }
-
-  async function focusHome() {
-    const { Window } = await import("@tauri-apps/api/window");
-    const home = await Window.getByLabel("main");
-    home?.setFocus();
-  }
 
   function toggleMenu(label: string) {
     openMenu = openMenu === label ? null : label;
@@ -119,7 +103,7 @@
 <svelte:window onclick={onWindowClick} />
 
 <header class="titlebar" bind:this={rootEl} data-tauri-drag-region>
-  <div class="titlebar__logo" data-id="logo"><i></i><span>MLCanvas</span></div>
+  <div class="titlebar__logo" data-id="logo"><span class="logo-yu">聿</span><span class="logo-name">Canvas</span></div>
   <nav class="menus">
     {#each menus as menu (menu.label)}
       <div class="menus__wrap">
@@ -150,14 +134,22 @@
   <div class="titlebar__spacer" data-tauri-drag-region></div>
   <div class="titlebar__doc" data-id="doc-title">{designStore.project}</div>
   <div class="titlebar__spacer" data-tauri-drag-region></div>
-  <div class="insp-toggle" data-id="inspector-toggle">
+  <div class="drawers" data-id="drawers">
     <button
-      class="insp-toggle__btn"
-      class:active={designStore.inspectorOpen}
-      title={designStore.inspectorOpen ? "隐藏检查器" : "显示检查器"}
-      onclick={() => designStore.toggleInspector()}
+      class="drawer-btn"
+      class:on={designStore.drawer === "board"}
+      title="画板（⌘⌥1）"
+      onclick={() => designStore.toggleDrawer("board")}
     >
-      <svg viewBox="0 0 16 16"><rect x="2.5" y="3" width="11" height="10" rx="1.5" /><path d="M9.5 3v10" /></svg>
+      <Icon name="board" size={14} />
+    </button>
+    <button
+      class="drawer-btn"
+      class:on={designStore.drawer === "agent"}
+      title="对话（⌘J）"
+      onclick={() => designStore.toggleDrawer("agent")}
+    >
+      <Icon name="chat" size={14} />
     </button>
   </div>
   <div class="zoom" data-id="zoom">
@@ -196,11 +188,15 @@
     border-bottom: 1px solid var(--line);
     padding: 0 8px 0 12px;
   }
-  .titlebar__logo { display: flex; align-items: center; gap: 8px; margin: 0 12px 0 2px; }
-  .titlebar__logo i {
-    width: 18px; height: 18px; border-radius: 5px;
+  .titlebar__logo { display: flex; align-items: center; gap: 1px; margin: 0 12px 0 2px; }
+  .titlebar__logo .logo-yu {
+    font-family: "PingFang SC", sans-serif;
+    font-size: 17px; font-weight: 600; line-height: 1;
     background: linear-gradient(135deg, #4b9eff, #7a5cff);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
   }
+  .titlebar__logo .logo-name { font-size: 13px; font-weight: 700; }
   .menus { display: flex; }
   .menus__wrap { position: relative; }
   .menus__item {
@@ -219,16 +215,27 @@
     content: ""; border: 3.5px solid transparent; border-top-color: var(--text-3);
     margin-top: 3px;
   }
-  .insp-toggle { display: flex; margin-right: 2px; }
-  .insp-toggle__btn {
-    width: 26px; height: 24px;
-    display: grid; place-items: center;
-    border-radius: 4px;
-    color: var(--text-2);
+  /* 两个抽屉按钮：画板 / 对话，互斥选中 */
+  .drawers {
+    display: flex; align-items: center; gap: 2px;
+    padding: 2px;
+    background: rgba(255, 255, 255, 0.045);
+    border-radius: 8px;
+    margin-right: 4px;
   }
-  .insp-toggle__btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
-  .insp-toggle__btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
-  .insp-toggle__btn.active { background: var(--accent-soft); color: var(--accent); }
+  .drawer-btn {
+    width: 28px; height: 24px;
+    display: grid; place-items: center;
+    border-radius: 6px;
+    color: var(--text-3);
+    transition: background 140ms ease-out, color 140ms ease-out;
+  }
+  .drawer-btn:hover { color: var(--text-2); }
+  .drawer-btn.on {
+    background: var(--raise-2);
+    color: var(--text);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07) inset;
+  }
   .zoom {
     display: flex; align-items: center; gap: 2px;
     height: 26px; padding: 0 2px;

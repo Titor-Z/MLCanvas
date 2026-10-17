@@ -51,7 +51,8 @@ jobs:
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev
+          # 只装 ayatana 版托盘库：与旧 libappindicator3-dev 互斥（同时装会 unmet dependencies）
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf build-essential libssl-dev libgtk-3-dev
 
       - name: vendor 参考库（skills + design-systems，pinned commit）
         shell: bash

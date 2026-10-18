@@ -5,6 +5,10 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 要发布的 tag（如 v0.5.0）
+        required: true
 
 concurrency:
   group: release-${{ github.ref }}
@@ -32,6 +36,9 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+        with:
+          # workflow_dispatch 从默认分支跑时也要拿到目标 tag 的提交
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -70,7 +77,8 @@ jobs:
           projectPath: app
           tauriScript: npm run tauri
           args: ${{ matrix.args }}
-          tagName: ${{ github.ref_name }}
-          releaseName: "聿Canvas ${{ github.ref_name }}"
-          releaseDraft: true
+          tagName: ${{ inputs.tag || github.ref_name }}
+          releaseName: "聿Canvas ${{ inputs.tag || github.ref_name }}"
+          # 直接发布：产物出现在 Releases 页，不再留草稿
+          releaseDraft: false
           prerelease: false

@@ -43,15 +43,14 @@ fn main() {
             artboard_http::start();
 
             // 兜底：本机偶发首次导航被吞（WKWebView URL 为空、页面白屏）。
-            // 启动后延迟重导航一次；若页面已正常加载则无副作用。
+            // 启动后延迟重载一次；若页面已正常加载则无副作用。
+            // 用 reload 而不是写死 tauri:// 地址——Windows 的页面地址是
+            // http://tauri.localhost/，导航到 tauri:// 会白屏。
             let nav_handle = handle.clone();
             std::thread::spawn(move || {
                 std::thread::sleep(std::time::Duration::from_secs(2));
                 if let Some(win) = nav_handle.get_webview_window("main") {
-                    let url: tauri::Url = "tauri://localhost/index.html"
-                        .parse()
-                        .expect("parse app url");
-                    let _ = win.navigate(url);
+                    let _ = win.reload();
                 }
             });
 

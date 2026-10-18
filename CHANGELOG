@@ -1,6 +1,12 @@
 # CHANGELOG
 
-## 未发布
+## 0.5.1 — 2026-10-18
+
+- 修 Windows 启动主页白屏：启动期"重导航兜底"原本写死 `tauri://localhost/index.html`，
+  而 Windows/Android 的页面地址是 `http://tauri.localhost/`，导航到不存在的 tauri 协议即白屏；
+  改为 `WebviewWindow::reload()`（与平台无关）
+
+## 0.5.0 发布补记
 
 多平台打包与发布。
 
